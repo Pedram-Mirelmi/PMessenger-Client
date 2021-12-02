@@ -7,6 +7,8 @@ CONFIG += c++20
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    include/BackendPackages/DataBase.cpp \
+    include/BackendPackages/DataHandler.cpp \
     include/MainApp.cpp \
     include/NetworkPackages/NetReceiver.cpp \
     include/NetworkPackages/NetSender.cpp \
@@ -33,6 +35,7 @@ HEADERS += \
     include/MainApp.hpp \
     include/NetworkPackages/NetReceiver.hpp \
     include/NetworkPackages/NetSender.hpp \
-    include/NetworkPackages/NetworkHandler.hpp
+    include/NetworkPackages/NetworkHandler.hpp \
+    include/Others/format.hpp
 
 DISTFILES +=

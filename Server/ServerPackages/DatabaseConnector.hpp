@@ -44,7 +44,7 @@ public:
         {
             statement->execute(query);
             success = true;
-            return "";
+            return std::string("Successfully executed") + query;
         }
         catch(const std::exception& e)
         {
@@ -72,7 +72,7 @@ public:
         }
     };
  
-    void SELECT(const std::string& query, QryRes& result)
+    std::string SELECT(const std::string& query, QryRes& result)
     {
         Json::Value columns;
         try
@@ -88,10 +88,11 @@ public:
                 result.append(new_row);
             }
             delete result_set;
+            return fmt::format("succesfullt executed {}", query); 
         }
         catch (const std::exception& e)
         {
-            std::cerr << e.what() << '\n';
+           return e.what();
         }
     };
 

@@ -12,6 +12,8 @@ NetworkHandler::NetworkHandler(QObject *parent, const QString &address, quint16 
     connect(this->m_socket, &QTcpSocket::disconnected, this->m_receiver, &NetMessageReceiver::stopListening);
     connect(this->m_socket, &QTcpSocket::connected, this->m_receiver, &NetMessageReceiver::startListening, Qt::UniqueConnection);
     connect(this->m_receiver, &NetMessageReceiver::newNetMessageArrived, this, &NetworkHandler::handleNewNetMessage);
+    this->connectToServer();
+    this->setAutoConnect(true);
 }
 
 // public:

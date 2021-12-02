@@ -8,8 +8,8 @@
 #include <QObject>
 #include "../NetworkPackages/NetReceiver.hpp"
 #include "../NetworkPackages/NetSender.hpp"
-#include "../MainApp.hpp"
-
+//#include "../MainApp.hpp"
+class MainApp;
 
 class NetworkHandler : public QObject
 {

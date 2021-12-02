@@ -4,11 +4,8 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QJsonObject>
-#include "NetworkPackages/NetReceiver.hpp"
-#include "NetworkPackages/NetSender.hpp"
-#include "NetworkPackages/NetworkHandler.hpp"
-
-#include "BackendPackages/DataHandler.hpp"
+#include "./NetworkPackages/NetworkHandler.hpp"
+#include "./BackendPackages/DataHandler.hpp"
 
 
 class MainApp : public QObject

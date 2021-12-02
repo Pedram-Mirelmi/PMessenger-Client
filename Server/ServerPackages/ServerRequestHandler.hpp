@@ -3,8 +3,8 @@
 #include "../../Commons/KeyWords.h"
 #include "DatabaseConnector.hpp"
 #include <unordered_set>
+#include "../../Commons/stringTools.hpp"
 
-// typedef Json::Value QryRes;
 typedef Json::Value JsonObj;
 typedef unsigned long int id_T;
 typedef std::unordered_set<std::string> set;
@@ -26,35 +26,42 @@ public:
     void handle(JsonObj& request, JsonObj& response)
     {
         using namespace KeyWords;
-        const std::string& req_type = request[MESSAGE_TYPE].asString();
+        const std::string& req_type = request[NET_MESSAGE_TYPE].asString();
         if (req_type == REGISTER)
         {
             this->handleRegister(request, response);
-            response[MESSAGE_TYPE] = ENTERING;
+            response[NET_MESSAGE_TYPE] = REGISTER_RESULT;
             return;
         }
         if (req_type == LOGIN)
         {
             this->handleLogin(request, response);
-            response[MESSAGE_TYPE] = ENTERING;
+            response[NET_MESSAGE_TYPE] = LOGIN_RESULT;
             return;
         }
         if (req_type == USER_SEARCH)
         {
             this->handleUserSearch(request, response);
-            response[MESSAGE_TYPE] = USER_SEARCH_RESULT;
+            response[NET_MESSAGE_TYPE] = USER_SEARCH_RESULT;
             return;
         }
-        if (req_type == NEW_MESSAGE)
+        if (req_type == SEND_NEW_MESSAGE)
         {
             this->handleNewMessage(request, response);
-            response[MESSAGE_TYPE] = MESSAGE_SENT_CONFIRMATION;
+            response[NET_MESSAGE_TYPE] = MESSAGE_SENT_CONFIRMATION;
             return;
         }
         if (req_type == CREATE_NEW_CHAT)
         {
             this->handleCreateNewChat(request, response);
-            response[MESSAGE_TYPE] = CHAT_CREATION_CONFIRMATION;
+            response[NET_MESSAGE_TYPE] = CHAT_CREATION_CONFIRMATION;
+            return;
+        }
+        if (req_type == FETCH_ALL)
+        {
+            this->handleFetchAll(request, response);
+            response[NET_MESSAGE_TYPE] = DATA;
+            response[NET_MESSAGE_TYPE] = FETCH_ALL_RESULT;
             return;
         }
     }
@@ -108,13 +115,29 @@ public:
         return;
     }
 
+    void handleFetchAll(JsonObj& request, JsonObj& response)
+    {
+        using namespace KeyWords;
+        auto privates_query = fmt::format("SELECT * from private_attendees WHERE user_id = {};", this->m_user_id);
+        auto groups_query = fmt::format("SELECT * from groups_attendees WHERE user_id = {};", this->m_user_id);
+        auto channels_query = fmt::format("SELECT * from channel_attendees WHERE user_id = {};", this->m_user_id);
+        JsonObj privates, groups, channels;
+        std::cout << this->db.SELECT(privates_query, privates);
+        std::cout << this->db.SELECT(groups_query, groups);
+        std::cout << this->db.SELECT(channels_query, channels);
+        response[PRIVATE_CHATS] = privates;
+        response[GROUP_CHATS] = groups;
+        response[CHANNELS] = channels;
+    }
+
+
     void handleUserSearch(JsonObj& request, JsonObj& response)
     {
         using namespace KeyWords;
         auto Qry = fmt::format("SELECT * FROM {} WHERE username LIKE {} OR name LIKE {}", USERS, request[SEARCH_PHRASE].asString(), request[SEARCH_PHRASE].asString());
         Json::Value search_result;
         this->db.SELECT(Qry, search_result);
-        response[SEARCH_RESULT] = search_result;
+        response[RESULT] = search_result;
         response[OUTCOME] = true;
     }
 
@@ -149,19 +172,35 @@ public:
     void handleNewMessage(JsonObj& request, JsonObj& response)
     {
         using namespace KeyWords;
-        auto query = fmt::format("INSERT INTO {}({}, {}) VALUES ('{}', '{}');",
-                        MESSAGES, ENV_ID, OWNER_ID, request[ENV_ID].asInt(), this->m_user_id);
+        auto message_type = request[MESSAGE_TYPE].asString();
+        if (message_type == TEXT_MESSAGE)
+            handleNewTextMessage(request, response);
+    }
+
+    void handleNewTextMessage(JsonObj& request, JsonObj& response)
+    {
+        using namespace KeyWords;
+        auto insert_message_Qry = fmt::format("INSERT INTO messages({}, {}) VALUES ('{}', '{}');",
+                                OWNER_ID, ENV_ID, request[ENV_ID].asInt(), this->m_user_id);
+        int message_id;
         bool successful;
-        response[DETAILS] = this->db.executeQry(query, successful);
+        std:: cout << this->db.executeQry(insert_message_Qry, successful);
+        if(successful)
+            message_id = this->getLastInsertId();
+        else
+            return;
+        auto insert_text_message_Qry = fmt::format
+                                    ("INSERT INTO text_messages(message_id, message_text) VALUES({}, {});",
+                                        message_id, toRaw(request[MESSAGE_TEXT].asString()));
+        std::cout << this->db.executeQry(insert_message_Qry, successful);
         if (successful)
         {
-            auto Qry = fmt::format("SELECT * FROM {} WHERE {} = {};", MESSAGES, MESSAGE_ID, "LAST_INSERT_ID()");
-            this->db.singleSELECT(Qry, response[USER_INFO]);
+            auto Qry = fmt::format("SELECT * FROM messages_view WHERE message_id = {};", message_id);
+            this->db.singleSELECT(Qry, response[MESSAGE_INFO]);
             response[OUTCOME] = TRUEE;
             return;
         }
         response[OUTCOME] = FALSEE;
-
     }
 
     void addContact(JsonObj& request, JsonObj& response)
@@ -182,5 +221,13 @@ public:
         
     }
 
+
+private:
+    int getLastInsertId()
+    {
+        JsonObj result;
+        this->db.singleSELECT("SELECT LAST_INSERT_ID() AS id;", result);
+        return result["id"].asInt64();
+    }
 };
 
