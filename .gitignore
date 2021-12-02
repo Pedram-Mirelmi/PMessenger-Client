@@ -35,3 +35,4 @@
 /Client/build/
 *.autosave
 *.sqlite
+/Client/data/
