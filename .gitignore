@@ -33,3 +33,5 @@
 
 /.vscode
 /Client/build/
+*.autosave
+*.sqlite
