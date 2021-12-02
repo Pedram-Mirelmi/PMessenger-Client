@@ -17,7 +17,9 @@ int main(int argc, char *argv[])
 
 
     QQmlApplicationEngine engine;
-    engine.rootContext()->setContextProperty("backend", &backend_app);
+    engine.rootContext()->setContextProperty("mainApp", &backend_app);
+    engine.rootContext()->setContextProperty("netConn", backend_app.m_network_handler);
+    engine.rootContext()->setContextProperty("dataHolder", backend_app.m_data_handler);
 
     const QUrl url(QStringLiteral("qrc:/QML/main.qml"));
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,

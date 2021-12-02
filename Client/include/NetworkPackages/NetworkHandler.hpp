@@ -8,7 +8,7 @@
 #include <QObject>
 #include "../NetworkPackages/NetReceiver.hpp"
 #include "../NetworkPackages/NetSender.hpp"
-//#include "../MainApp.hpp"
+
 class MainApp;
 
 class NetworkHandler : public QObject
@@ -26,15 +26,19 @@ public:
 
     void setAutoConnect(bool enable);
 
+    Q_INVOKABLE void sendRegisterReq(const QString& username, const QString& password);
+    Q_INVOKABLE void sendLoginReq(const QString& username, const QString& password);
+    Q_INVOKABLE void sendFetchAllReq();
+
+
 public slots:
     void connectToServer();
     void handleNewNetMessage(const QJsonObject& net_msg);
 
 signals:
     void newDataArrived(const QJsonObject& msg);
-    void newMessageArrived(const QJsonObject& msg);
     void entryNetMessageArrived(const QJsonObject& msg);
     void userSearchResultArrived(const QJsonObject& msg);
     void newChatCreationMsgArrived(const QJsonObject& msg);
-    void messageConfirmationArrived(const QJsonObject& msg);
+    void testSignal(QString s);
 };

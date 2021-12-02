@@ -5,7 +5,6 @@
 
 namespace KeyWords
 {
-//    using namespace std::literals;
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Database keywords
 constexpr auto SELECT = "SELECT";
@@ -54,7 +53,7 @@ constexpr auto MESSAGE_ID = "message_id";
 */
 constexpr auto NET_MESSAGE_TYPE = "net_message_type"; // in all requests and responses and basically every network message
 
-constexpr auto OUTCOME = "outcome"; // in all responses. represents that the proccess of request was successful or not
+// constexpr auto OUTCOME = "outcome"; // in all responses. represents that the proccess of request was successful or not
 
 constexpr auto SUCCESFUL = "succesful"; // in all responses. represents that the response has the information wanted by client or not
 
@@ -110,7 +109,7 @@ constexpr auto GET_ENV_MESSAGES = "get_env_messages";
     USER_SEARCH when user search for another user to start a new conversation with
     request:    {NET_MESSAGE_TYPE: USER_SEARCH, SEARCH_PHRASE: ...}
     response:   {NET_MESSAGE_TYPE: USER_SEARCH_RESULT, RESULT: [...]}
-
+]
 */
 constexpr auto USER_SEARCH_RESULT = "user_search_result";
 constexpr auto USER_SEARCH = "user_search";
@@ -131,10 +130,10 @@ constexpr auto ENV_INFO = "env_info";
 /*
     SEND_NEW_MESSAGE when user sends a new message on an "env_id" chat environment
     request:    {NET_MESSAGE_TYPE: SEND_NEW_MESSAGE, MESSAGE_TYPE: ['T' for text_message OR other message types in later versions ...], MESSAGE_INFO: {...}}
-    response:   {NET_MESSAGE_TYPE: MESSAGE_SENT_CONFIRMATION, MESSAGE_TYPE: [TEXT_MESSAGE for text OR other message types in later versions], MESSAGE_INFO: {...} }
+    response:   {NET_MESSAGE_TYPE: DATA, DATA_TYPE: MESSAGE_SENT_CONFIRMAION, MESSAGE_TYPE: [TEXT_MESSAGE for text OR other message types in later versions], MESSAGE_INFO: {...} }
 */
 constexpr auto SEND_NEW_MESSAGE = "send_new_message";
-constexpr auto MESSAGE_TYPE = "message_type";
+//constexpr auto MESSAGE_TYPE = "message_type";
 constexpr auto MESSAGE_INFO = "message_info";
 constexpr auto MESSAGE_SENT_CONFIRMATION = "message_sent_confirmation";
 constexpr auto TEXT_MESSAGE = "text_message";
@@ -161,7 +160,7 @@ constexpr auto CHANNEL_MESSAGES = "channel_messages";
 // constexpr auto SUCCESS = "success";
 
 constexpr auto ENV_TYPE = "env_type";
-constexpr auto TEXT_MESSAGE = "text_message";
+//constexpr auto TEXT_MESSAGE = "text_message";
 
 
 

@@ -31,7 +31,7 @@ public:
 
 	Server(const int& port_num)
 		: listening_port(port_num)
-	{
+	{ 
 		createListeningSocket();
 		bindlListeningSocket();
 		runServer();

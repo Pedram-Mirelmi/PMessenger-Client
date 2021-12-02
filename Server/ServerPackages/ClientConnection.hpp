@@ -17,7 +17,7 @@ class ClientConnection
 typedef Json::Value msg_t;
 typedef std::unordered_map<id_T, std::shared_ptr<ClientConnection>> conn_set;
 private:
-	// sockaddr_in hint;
+	// sockaddr_in hint; 
     NetworkHandler networkHandler;
     id_T user_id = INVALID_ID;
     conn_set& other_connections;
@@ -40,15 +40,15 @@ public:
             while (true)
             {
                 this->networkHandler.receiveMessage(current_request);
-                if (current_request[MESSAGE_TYPE] == CLOSE_CONNECTION)
+                if (current_request[NET_MESSAGE_TYPE] == CLOSE_CONNECTION)
                 {
                     std::cout << "connection closed properly by client" << std::endl;
                     return INVALID_ID;
                 }
                 this->rh.handle(current_request, current_response);
-                if ((current_request[MESSAGE_TYPE] == REGISTER
-                     || current_request[MESSAGE_TYPE] == LOGIN) 
-                     && current_response[OUTCOME] == TRUEE)
+                if ((current_request[NET_MESSAGE_TYPE] == REGISTER
+                     || current_request[NET_MESSAGE_TYPE] == LOGIN) 
+                     && current_response[SUCCESFUL] == TRUEE)
                 {
                     std::cout << current_response << std::endl;
                     this->user_id = std::stoi(current_response[USER_INFO][USER_ID].asString());
@@ -78,7 +78,7 @@ public:
             while (true)
             {
                 this->networkHandler.receiveMessage(current_request);
-                if (current_request[MESSAGE_TYPE] == CLOSE_CONNECTION)
+                if (current_request[NET_MESSAGE_TYPE] == CLOSE_CONNECTION)
                 {
                     std::cout << "connection closed properly by client" << std::endl;
                     return;
@@ -111,18 +111,18 @@ private:
     void checkForSpecialOperations(msg_t request, msg_t response)
     {
         using namespace KeyWords;
-        if (request[MESSAGE_TYPE] == NEW_MESSAGE
-            && response[OUTCOME] == TRUEE)
+        if (request[NET_MESSAGE_TYPE] == SEND_NEW_MESSAGE
+            && response[SUCCESFUL] == TRUEE)
         {
-            request[TIME] = response[TIME];
-            this->announceNewMessageToOthers(response);
+            this->announceNewMessageToOthers(response[MESSAGE_INFO]);
         }
     }
 
     void announceNewMessageToOthers(msg_t& message_info)
     {
+        using namespace KeyWords;
         std::unordered_set<std::string> audiences;
-        this->rh.getParticipants(message_info[KeyWords::CHAR_ENV].asInt64(), audiences);
+        this->rh.getParticipants(message_info[ENV_ID].asInt64(), audiences);
         std::vector<std::thread> threads;
         threads.reserve(audiences.size());
         for (const std::string& id_str : audiences)

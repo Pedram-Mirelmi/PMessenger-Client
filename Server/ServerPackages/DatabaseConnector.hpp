@@ -16,7 +16,7 @@ typedef unsigned long int id_T;
 
 static std::mutex db_lock;
 static sql::Driver* ThsGetDriverInstance()
-{
+{ 
     std::lock_guard<std::mutex> lock(db_lock);
     return get_driver_instance();
 } 

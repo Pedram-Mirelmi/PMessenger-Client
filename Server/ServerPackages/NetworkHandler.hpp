@@ -12,7 +12,7 @@
 #include "../../Commons/KeyWords.h"
 
 
-class NetworkHandler
+class NetworkHandler 
 {
     typedef Json::Value msg_t;
 private:
@@ -88,7 +88,7 @@ private:
     void closeConnection()
     {
         msg_t closing_msg;
-        closing_msg[KeyWords::MESSAGE_TYPE] = KeyWords::CLOSE_CONNECTION;
+        closing_msg[KeyWords::NET_MESSAGE_TYPE] = KeyWords::CLOSE_CONNECTION;
         this->sendMessage(closing_msg);
     }
 };

@@ -51,7 +51,7 @@ Item
                 text: "Login"
                 onClicked:
                 {
-                    backend.sendLoginReq(usernameField.text, passwordField.text);
+                    netConn.sendLoginReq(usernameField.text, passwordField.text);
                 }
             }
             Button
@@ -60,7 +60,7 @@ Item
                 text: "Register"
                 onClicked:
                 {
-                    backend.sendRegisterReq(usernameField.text, passwordField.text);
+                    netConn.sendRegisterReq(usernameField.text, passwordField.text);
                 }
             }
         }

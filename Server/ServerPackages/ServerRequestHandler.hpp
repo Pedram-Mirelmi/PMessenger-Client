@@ -8,7 +8,6 @@
 typedef Json::Value JsonObj;
 typedef unsigned long int id_T;
 typedef std::unordered_set<std::string> set;
-
 typedef Json::Value JsonObj;
 
 class ServerRequestHandler
@@ -27,6 +26,7 @@ public:
     {
         using namespace KeyWords;
         const std::string& req_type = request[NET_MESSAGE_TYPE].asString();
+        std::cout << req_type;
         if (req_type == REGISTER)
         {
             this->handleRegister(request, response);
@@ -84,20 +84,20 @@ public:
     void handleRegister(JsonObj& request, JsonObj& response)
     {
         using namespace KeyWords;
-        auto query = fmt::format("INSERT INTO {}({}, {}) VALUES ('{}', '{}');",
-                        USERS, USERNAME, PASSWORD, request[USERNAME].asString(), request[PASSWORD].asString());
+        auto query = fmt::format("INSERT INTO users(username, password) VALUES ('{}', '{}');",
+                                    request[USERNAME].asString(), request[PASSWORD].asString());
        
         bool successful;
         response[DETAILS] = this->db.executeQry(query, successful);
+        int user_id = getLastInsertId();
         if (successful)
         {
-            auto Qry = fmt::format("SELECT * FROM {} WHERE {} = '{}';", USERS, USER_ID, "LAST_INSERT_ID()");
+            auto Qry = fmt::format("SELECT * FROM users WHERE user_id = {};", "LAST_INSERT_ID()");
             this->db.singleSELECT(Qry, response[USER_INFO]);
-            response[OUTCOME] = TRUEE;
+            response[SUCCESFUL] = TRUEE;
             return;
         }
-        response[OUTCOME] = FALSEE;
-
+        response[SUCCESFUL] = FALSEE;
     }
 
     void handleLogin(JsonObj& request, JsonObj& response)
@@ -107,11 +107,11 @@ public:
         this->db.SELECT(Qry, response);
         if (response[PASSWORD] == request[PASSWORD])
         {
-            response[OUTCOME] = TRUEE;
+            response[SUCCESFUL] = TRUEE;
             return;
         }
         response.clear();
-        response[OUTCOME] = FALSEE;        
+        response[SUCCESFUL] = FALSEE;        
         return;
     }
 
@@ -138,7 +138,7 @@ public:
         Json::Value search_result;
         this->db.SELECT(Qry, search_result);
         response[RESULT] = search_result;
-        response[OUTCOME] = true;
+        response[SUCCESFUL] = true;
     }
 
     void handleCreateNewChat(JsonObj& request, JsonObj& response)
@@ -163,10 +163,10 @@ public:
         {
             response[CONTACT_ID] = request[CONTACT_ID];
             response[ENV_ID] = env_id;
-            response[OUTCOME] = TRUEE;
+            response[SUCCESFUL] = TRUEE;
             return;
         }
-        response[OUTCOME] = FALSEE;
+        response[SUCCESFUL] = FALSEE;
     }
 
     void handleNewMessage(JsonObj& request, JsonObj& response)
@@ -197,10 +197,10 @@ public:
         {
             auto Qry = fmt::format("SELECT * FROM messages_view WHERE message_id = {};", message_id);
             this->db.singleSELECT(Qry, response[MESSAGE_INFO]);
-            response[OUTCOME] = TRUEE;
+            response[SUCCESFUL] = TRUEE;
             return;
         }
-        response[OUTCOME] = FALSEE;
+        response[SUCCESFUL] = FALSEE;
     }
 
     void addContact(JsonObj& request, JsonObj& response)
@@ -212,7 +212,7 @@ public:
                             request[CONTACT_ID].asString());
         
         response[DETAILS] = this->db.executeQry(query, successful); 
-        response[OUTCOME] = successful ? TRUEE : FALSEE;
+        response[SUCCESFUL] = successful ? TRUEE : FALSEE;
         return;
     }   
 

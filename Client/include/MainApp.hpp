@@ -7,6 +7,7 @@
 #include "./NetworkPackages/NetworkHandler.hpp"
 #include "./BackendPackages/DataHandler.hpp"
 
+static QJsonObject user_info;
 
 class MainApp : public QObject
 {
@@ -20,17 +21,12 @@ private:
 public:
     explicit MainApp (QObject* parent = nullptr, const QString& address = "127.0.0.1", const quint16 port = 54000);;
 
-public slots:
-    void sendRegisterReq(const QString& username, const QString& password);
-
-    void sendLoginReq(const QString& username, const QString& password);
-
 
 private slots:
-    void handleNetMessage(QJsonObject msg);
-
-
-signals:
-    void enterResponseCaugth(bool outcome, QString note);
-
+    void initiateDb(const QJsonObject& net_msg)
+    {
+        using namespace KeyWords;
+        if (net_msg[SUCCESFUL].toBool())
+            this->m_data_handler->startDB();
+    }
 };

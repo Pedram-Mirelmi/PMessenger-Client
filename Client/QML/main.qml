@@ -1,7 +1,6 @@
 import QtQuick 2.14
 import QtQuick.Window 2.14
 import QtQuick.Controls 2.14
-
 import "./MainEnvComponents/"
 
 ApplicationWindow
@@ -12,10 +11,10 @@ ApplicationWindow
     title: qsTr("P-Messenger")
     Connections
     {
-        target: backend
-        function onEnterResponseCaugth(outcome, note)
+        target: netConn
+        function onEntryNetMessageArrived(net_msg)
         {
-            console.log("hereeeee")
+            console.log("hereeeee", net_msg)
             mainEnv.visible = true
             introEnv.destroy()
         }

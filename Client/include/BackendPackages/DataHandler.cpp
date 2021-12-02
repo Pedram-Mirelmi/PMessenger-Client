@@ -1,18 +1,18 @@
 #include "DataHandler.hpp"
-
+#include "../Others/format.hpp"
 
 DataHandler::DataHandler(QObject *parent, NetworkHandler *netHandler)
     :QObject(parent), m_net_handler(netHandler)
-{
-    QObject::connect(m_net_handler, &NetworkHandler::newDataArrived, this, &DataHandler::handleNewData);
-}
+{}
 
+//public
 void DataHandler::startDB()
 {
     if (this->m_db.tryToInit())
-        this->sendFetchAllReq();
+        this->m_net_handler->sendFetchAllReq();
 }
 
+// public slot
 void DataHandler::handleNewData(const QJsonObject &net_message)
 {
     using namespace KeyWords;
@@ -37,6 +37,7 @@ void DataHandler::handleNewData(const QJsonObject &net_message)
     }
 }
 
+// private
 void DataHandler::handleFetchAllResult(const QJsonObject &net_message)
 {
     using namespace KeyWords;
@@ -51,23 +52,18 @@ void DataHandler::handleFetchAllResult(const QJsonObject &net_message)
             this->insertChannelEnv(channel_env.toObject());
 }
 
+// private
 void DataHandler::sendReqForChatEnvMessages(const int &env_id)
 {
     using namespace KeyWords;
     QJsonObject req;
-    req[MESSAGE_TYPE] = GET_ENV_MESSAGES;
+    req[NET_MESSAGE_TYPE] = GET_ENV_MESSAGES;
     req [ENV_ID] = env_id;
     this->m_net_handler->m_sender->sendMessage(req);
 }
 
-void DataHandler::sendFetchAllReq()
-{
-    using namespace KeyWords;
-    QJsonObject req;
-    req[MESSAGE_TYPE] = FETCH_ALL;
-    this->m_net_handler->m_sender->sendMessage(req);
-}
 
+// private
 bool DataHandler::insertPrivateEnv(const QJsonObject &env)
 {
     using namespace KeyWords;
@@ -78,26 +74,31 @@ bool DataHandler::insertPrivateEnv(const QJsonObject &env)
     return this->m_db.execOtherQry(private_env_insert_Qry.c_str());
 }
 
+// private
 bool DataHandler::insertGroupEnv(const QJsonObject &env)
 {
     // TODO
 }
 
+// private
 bool DataHandler::insertChannelEnv(const QJsonObject &env)
 {
     // TODO
 }
 
+// private
 void DataHandler::insertGroupMessages(const QJsonArray &messages)
 {
     // TODO
 }
 
+// private
 void DataHandler::insertChannelMessages(const QJsonArray &messages)
 {
     // TODO
 }
 
+// private
 void DataHandler::insertPrivateMessages(const QJsonArray &messages)
 {
     using namespace KeyWords;
@@ -122,7 +123,7 @@ void DataHandler::insertPrivateMessages(const QJsonArray &messages)
     }
 }
 
-
+// private
 QJsonArray DataHandler::convertToNormalForm(const QJsonArray &data)
 {
     QJsonArray result;

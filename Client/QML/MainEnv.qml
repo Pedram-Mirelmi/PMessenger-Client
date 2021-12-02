@@ -11,10 +11,10 @@ Item
     id: root
     anchors.fill: parent
     property int user_id: -1
-    Connections
-    {
-        target: backend
-    }
+//    Connections
+//    {
+//        target:
+//    }
 
     SplitView
     {
@@ -30,5 +30,9 @@ Item
             id: chatComp
         }
 
+    }
+    NewChatDialog
+    {
+        id: newChatDialog
     }
 }

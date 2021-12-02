@@ -26,6 +26,39 @@ void NetworkHandler::setAutoConnect(bool enable)
 }
 
 
+// Q_INVOKABLE
+void NetworkHandler::sendRegisterReq(const QString &username, const QString &password)
+{
+    QJsonObject request;
+    using namespace KeyWords;
+    request[NET_MESSAGE_TYPE] = REGISTER;
+    request[USERNAME] = username;
+    request[PASSWORD] = password;
+    this->m_sender->sendMessage(request);
+    emit this->testSignal("Hiiiiii the fuuuckkkkkkkkkkkk");
+}
+
+// Q_INVOKABLE
+void NetworkHandler::sendLoginReq(const QString &username, const QString &password)
+{
+    QJsonObject request;
+    using namespace KeyWords;
+    request[NET_MESSAGE_TYPE] = LOGIN;
+    request[USERNAME] = username;
+    request[PASSWORD] = password;
+    this->m_sender->sendMessage(request);
+}
+
+// Q_INVOKSBLE
+void NetworkHandler::sendFetchAllReq()
+{
+    using namespace KeyWords;
+    QJsonObject req;
+    req[NET_MESSAGE_TYPE] = FETCH_ALL;
+    this->m_sender->sendMessage(req);
+}
+
+
 // public slot
 void NetworkHandler::connectToServer()
 {
@@ -37,16 +70,32 @@ void NetworkHandler::connectToServer()
 void NetworkHandler::handleNewNetMessage(const QJsonObject &net_msg)
 {
     using namespace KeyWords;
-    if (net_msg[MESSAGE_TYPE] == REGISTER || net_msg[MESSAGE_TYPE] == LOGIN)
-        emit entryNetMessageArrived(net_msg);
-    else if (net_msg[MESSAGE_TYPE] == USER_SEARCH_RESULT)
-        emit userSearchResultArrived(net_msg);
-    else if (net_msg[MESSAGE_TYPE] == CHAT_CREATION_CONFIRMATION)
-        emit newChatCreationMsgArrived(net_msg);
-    else if (net_msg[MESSAGE_TYPE] == MESSAGE_SENT_CONFIRMATION)
-        emit messageConfirmationArrived(net_msg);
-    else if (net_msg[MESSAGE_TYPE] == DATA)
-        emit newDataArrived(net_msg);
+    if (net_msg[NET_MESSAGE_TYPE] == REGISTER_RESULT || net_msg[NET_MESSAGE_TYPE] == LOGIN_RESULT)
+    {
+        emit this->entryNetMessageArrived(net_msg);
+        return;
+    }
+    if (net_msg[NET_MESSAGE_TYPE] == USER_SEARCH_RESULT)
+    {
+        emit this->userSearchResultArrived(net_msg);
+        return;
+    }
+    else if (net_msg[NET_MESSAGE_TYPE] == CHAT_CREATION_CONFIRMATION)
+    {
+        emit this->newChatCreationMsgArrived(net_msg);
+        return;
+    }
+    if (net_msg[NET_MESSAGE_TYPE] == DATA)
+    {
+        emit this->newDataArrived(net_msg);
+        return;
+    }
+    if (net_msg[NET_MESSAGE_TYPE] == USER_SEARCH_RESULT)
+    {
+        emit this->userSearchResultArrived(net_msg);
+        return;
+    }
+
 }
 
 

@@ -12,14 +12,14 @@
 #include "../Commons/KeyWords.h"
 #include "DataBase.hpp"
 #include "../NetworkPackages/NetworkHandler.hpp"
-#include "../Others/format.hpp"
+
 
 class MainApp;
 
 class DataHandler : public QObject
 {
     Q_OBJECT
-    friend class MainApp;
+//    friend class MainApp;
 
     DataBase m_db;
     NetworkHandler* m_net_handler;
@@ -34,15 +34,24 @@ public slots:
 private:
     void handleFetchAllResult(const QJsonObject& net_message);
 
-    void addNewChatEnv(const QJsonObject& net_message);
+    void sendReqForChatEnvMessages(const int& env_id);
 
-    void sendReqForChatEnvDetails(const int& env_id);
+    bool insertPrivateEnv(const QJsonObject& env);
 
-    void sendFetchAllReq();
+    bool insertGroupEnv(const QJsonObject& env);
 
-    void insertNewMessage(const QJsonObject& message);
+    bool insertChannelEnv(const QJsonObject& env);
+
+    void insertPrivateMessages(const QJsonArray& messages);
+
+    void insertGroupMessages(const QJsonArray& messages);
+
+    void insertChannelMessages(const QJsonArray& messages);
 signals:
     void newMessageReceived(const QJsonObject& message_info);
+
+private:
+    QJsonArray convertToNormalForm(const QJsonArray& data);
 };
 
 
