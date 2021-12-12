@@ -23,10 +23,5 @@ public:
 
 
 private slots:
-    void initiateDb(const QJsonObject& net_msg)
-    {
-        using namespace KeyWords;
-        if (net_msg[SUCCESFUL].toBool())
-            this->m_data_handler->startDB();
-    }
+    void initiateDb(const QJsonObject& net_msg);
 };

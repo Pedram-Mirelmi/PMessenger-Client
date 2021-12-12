@@ -9,7 +9,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
-#include "../Commons/KeyWords.h"
+#include "../../Commons/KeyWords.hpp"
 #include "DataBase.hpp"
 #include "../NetworkPackages/NetworkHandler.hpp"
 
@@ -21,37 +21,35 @@ class DataHandler : public QObject
     Q_OBJECT
 //    friend class MainApp;
 
-    DataBase m_db;
+    DataBase* m_db;
     NetworkHandler* m_net_handler;
 public:
-    DataHandler(QObject* parent, NetworkHandler* netHandler);
+    explicit DataHandler(QObject* parent, NetworkHandler* netHandler);
 
     void startDB();
 
 public slots:
     void handleNewData(const QJsonObject& net_message);
 
+
+private slots:
+    void addNewMessageToModel(const QJsonObject& msg_info);
+
+    void addNewChatEnvToModel(const QJsonObject& env_info);
+
+
+
 private:
     void handleFetchAllResult(const QJsonObject& net_message);
 
     void sendReqForChatEnvMessages(const int& env_id);
 
-    bool insertPrivateEnv(const QJsonObject& env);
 
-    bool insertGroupEnv(const QJsonObject& env);
-
-    bool insertChannelEnv(const QJsonObject& env);
-
-    void insertPrivateMessages(const QJsonArray& messages);
-
-    void insertGroupMessages(const QJsonArray& messages);
-
-    void insertChannelMessages(const QJsonArray& messages);
 signals:
     void newMessageReceived(const QJsonObject& message_info);
 
 private:
-    QJsonArray convertToNormalForm(const QJsonArray& data);
+
 };
 
 

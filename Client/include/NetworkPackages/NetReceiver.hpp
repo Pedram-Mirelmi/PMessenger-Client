@@ -6,7 +6,7 @@
 #include <QMutex>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include "../../../Commons/KeyWords.h"
+#include "../../../Commons/KeyWords.hpp"
 
 class NetMessageReceiver : public QObject
 {
@@ -16,7 +16,7 @@ class NetMessageReceiver : public QObject
     QByteArray m_inbuff;
     QMutex m_lock;
     bool m_header_has_been_read = false;
-    quint8 m_current_header;
+    qsizetype m_current_header;
 public:
     explicit NetMessageReceiver(QObject* parent, QTcpSocket* socket, const quint8& header_size = 8);
 
@@ -32,5 +32,5 @@ private:
     void tryToParsMessage();
 
 signals:
-   void newNetMessageArrived(QJsonObject msg);
+   void newNetMessageArrived(const QJsonObject& msg);
 };

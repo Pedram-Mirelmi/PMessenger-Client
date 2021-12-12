@@ -1,6 +1,6 @@
 #pragma once
 #include <fmt/format.h>
-#include "../../Commons/KeyWords.h"
+#include "../../Commons/KeyWords.hpp"
 #include "DatabaseConnector.hpp"
 #include <unordered_set>
 #include "../../Commons/stringTools.hpp"
@@ -25,39 +25,39 @@ public:
     void handle(JsonObj& request, JsonObj& response)
     {
         using namespace KeyWords;
-        const std::string& req_type = request[NET_MESSAGE_TYPE].asString();
-        std::cout << req_type;
-        if (req_type == REGISTER)
+        const std::string& net_msg_type = request[NET_MESSAGE_TYPE].asString();
+        std::cout << net_msg_type;
+        if (net_msg_type == REGISTER)
         {
             this->handleRegister(request, response);
             response[NET_MESSAGE_TYPE] = REGISTER_RESULT;
             return;
         }
-        if (req_type == LOGIN)
+        if (net_msg_type == LOGIN)
         {
             this->handleLogin(request, response);
             response[NET_MESSAGE_TYPE] = LOGIN_RESULT;
             return;
         }
-        if (req_type == USER_SEARCH)
+        if (net_msg_type == USER_SEARCH)
         {
             this->handleUserSearch(request, response);
             response[NET_MESSAGE_TYPE] = USER_SEARCH_RESULT;
             return;
         }
-        if (req_type == SEND_NEW_MESSAGE)
+        if (net_msg_type == SEND_NEW_MESSAGE)
         {
             this->handleNewMessage(request, response);
             response[NET_MESSAGE_TYPE] = MESSAGE_SENT_CONFIRMATION;
             return;
         }
-        if (req_type == CREATE_NEW_CHAT)
+        if (net_msg_type == CREATE_NEW_CHAT)
         {
             this->handleCreateNewChat(request, response);
             response[NET_MESSAGE_TYPE] = CHAT_CREATION_CONFIRMATION;
             return;
         }
-        if (req_type == FETCH_ALL)
+        if (net_msg_type == FETCH_ALL)
         {
             this->handleFetchAll(request, response);
             response[NET_MESSAGE_TYPE] = DATA;

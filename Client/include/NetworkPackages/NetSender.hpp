@@ -1,12 +1,11 @@
 #pragma once
 #include <QDebug>
-#include "../Commons/KeyWords.h"
 #include <thread>
 #include <QString>
 #include <QTcpSocket>
 #include <QJsonObject>
 #include <QJsonDocument>
-#include "../../../Commons/KeyWords.h"
+#include "../Commons/KeyWords.hpp"
 #include <cmath>
 
 class NetMessageSender : public QObject

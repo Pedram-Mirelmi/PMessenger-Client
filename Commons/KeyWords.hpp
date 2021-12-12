@@ -1,6 +1,5 @@
 #pragma once
 #include <iostream>
-#include <string>
 // should be converted into enum class later
 
 namespace KeyWords
@@ -133,7 +132,7 @@ constexpr auto ENV_INFO = "env_info";
     response:   {NET_MESSAGE_TYPE: DATA, DATA_TYPE: MESSAGE_SENT_CONFIRMAION, MESSAGE_TYPE: [TEXT_MESSAGE for text OR other message types in later versions], MESSAGE_INFO: {...} }
 */
 constexpr auto SEND_NEW_MESSAGE = "send_new_message";
-//constexpr auto MESSAGE_TYPE = "message_type";
+constexpr auto MESSAGE_TYPE = "message_type";
 constexpr auto MESSAGE_INFO = "message_info";
 constexpr auto MESSAGE_SENT_CONFIRMATION = "message_sent_confirmation";
 constexpr auto TEXT_MESSAGE = "text_message";
@@ -154,8 +153,6 @@ constexpr auto CHANNEL_MESSAGES = "channel_messages";
 // constexpr auto PHONE = "phone";
 // constexpr auto MESSAGE_INFO = "message_info";
 // constexpr auto MUTUAL = "mutual";
-// constexpr auto CHAT_ENV = "chat_env";
-// constexpr auto CHAT_ENV_DETAILS_RESULT = "chat_env_details_result";
 // constexpr auto USER_INFO = "user_info";
 // constexpr auto SUCCESS = "success";
 

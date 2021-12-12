@@ -13,6 +13,13 @@ MainApp::MainApp(QObject *parent, const QString &address, const quint16 port)
 
 }
 
+void MainApp::initiateDb(const QJsonObject &net_msg)
+{
+    using namespace KeyWords;
+    if (net_msg[SUCCESFUL].toBool())
+        this->m_data_handler->startDB();
+}
+
 
 
 

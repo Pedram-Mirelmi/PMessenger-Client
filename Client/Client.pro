@@ -31,6 +31,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
     include/BackendPackages/DataBase.hpp \
     include/BackendPackages/DataHandler.hpp \
+    include/ClientKeywords.hpp \
     include/CustomTypes/TSQByteArray.h \
     include/MainApp.hpp \
     include/NetworkPackages/NetReceiver.hpp \
