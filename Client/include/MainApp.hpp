@@ -5,7 +5,7 @@
 #include <QQmlContext>
 #include <QJsonObject>
 #include "./NetworkPackages/NetworkHandler.hpp"
-#include "./BackendPackages/DataHandler.hpp"
+#include "./DataHandlingPackages/DataHandler.hpp"
 
 static QJsonObject user_info;
 

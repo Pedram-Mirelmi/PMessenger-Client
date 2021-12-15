@@ -58,26 +58,6 @@ void DataHandler::handleNewData(const QJsonObject &net_message)
     }
 }
 
-void DataHandler::addNewMessageToModel(const QJsonObject &msg_info)
-{
-    modelLock.lock();
-    using namespace KeyWords;
-    if (!all_chats.contains(msg_info[ENV_ID].toString()))
-    {
-        // ERROR
-        return;
-    }
-    all_chats[msg_info[ENV_ID].toString()].toArray().append(msg_info);
-    auto current_index = all_chats[msg_info[ENV_ID].toString()].toArray()
-
-    modelLock.unlock();
-}
-
-void DataHandler::addNewChatEnvToModel(const QJsonObject &env_info)
-{
-
-}
-
 // private
 void DataHandler::handleFetchAllResult(const QJsonObject &net_message)
 {

@@ -31,14 +31,6 @@ public:
 public slots:
     void handleNewData(const QJsonObject& net_message);
 
-
-private slots:
-    void addNewMessageToModel(const QJsonObject& msg_info);
-
-    void addNewChatEnvToModel(const QJsonObject& env_info);
-
-
-
 private:
     void handleFetchAllResult(const QJsonObject& net_message);
 
