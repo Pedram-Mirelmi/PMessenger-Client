@@ -1,36 +1,30 @@
 #include "DataHandler.hpp"
-#include "../ClientKeywords.hpp"
 #include <QMutex>
-//#include <mutex>
-QMutex modelLock; // for all_chats
-
-// plays the main role for model
-static QJsonObject all_chats;
-/*
-    This form:
-    {
-        env_id: {
-            <info>
-        },
-
-        env_id: {
-            <info>
-        },
-        .
-        .
-        .
-    }
-
-*/
+#include "../ClientKeywords.hpp"
 
 DataHandler::DataHandler(QObject *parent, NetworkHandler *netHandler)
-    :QObject(parent), m_db(new DataBase(this)), m_net_handler(netHandler)
+    :QObject(parent),
+      m_db(new DataBase(this)),
+      m_net_handler(netHandler),
+      m_message_list_model(new MessageListModel(this)),
+      m_conversation_list_model(new ConversationsListModel(this))
 {}
+
+void DataHandler::feedNewMessagesToModel(const int &env_id)
+{
+    this->m_message_list_model->m_messages.clear();
+    this->m_message_list_model->clearModel();
+    // TODO -- needs to be corrected when added new message types features
+    this->m_message_list_model->beginResetModel();
+    this->m_db->SELECT(this->m_message_list_model->m_messages,
+                       fmt::format("SELECT * FROM text_messages_view WHERE env_id={};", env_id).data());
+    this->m_message_list_model->endResetModel();
+}
 
 //public
 void DataHandler::startDB()
 {
-    if (this->m_db->tryToInit())
+    if (this->m_db->tryToInit()) // if inited
         this->m_net_handler->sendFetchAllReq();
 }
 
@@ -62,15 +56,25 @@ void DataHandler::handleNewData(const QJsonObject &net_message)
 void DataHandler::handleFetchAllResult(const QJsonObject &net_message)
 {
     using namespace KeyWords;
+
     if (net_message.contains(PRIVATE_CHATS))
-        for (const auto& private_env : net_message[PRIVATE_CHATS].toArray())
+    {
+        auto private_chats = net_message[PRIVATE_CHATS].toArray();
+        for (const auto& private_env : private_chats)
             this->m_db->insertPrivateEnv(private_env.toObject());
+    }
     if (net_message.contains(GROUP_CHATS))
-        for (const auto& group_env : net_message[GROUP_CHATS].toArray())
+    {
+        auto group_chats = net_message[GROUP_CHATS].toArray();
+        for (const auto& group_env : group_chats)
             this->m_db->insertGroupEnv(group_env.toObject());
+    }
     if (net_message.contains(CHANNEL_MESSAGES))
-        for (const auto& channel_env : net_message[CHANNELS].toArray())
+    {
+        auto channels = net_message[CHANNELS].toArray();
+        for (const auto& channel_env : channels)
             this->m_db->insertChannelEnv(channel_env.toObject());
+    }
 }
 
 // private

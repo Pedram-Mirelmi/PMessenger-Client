@@ -12,30 +12,37 @@
 #include "../../Commons/KeyWords.hpp"
 #include "DataBase.hpp"
 #include "../NetworkPackages/NetworkHandler.hpp"
-
+#include "./models/ConversationsListModel.hpp"
+#include "./models/MessageListModel.hpp"
 
 class MainApp;
 
 class DataHandler : public QObject
 {
     Q_OBJECT
-//    friend class MainApp;
+    friend class MainApp;
 
     DataBase* m_db;
     NetworkHandler* m_net_handler;
+    MessageListModel* m_message_list_model;
+    ConversationsListModel* m_conversation_list_model;
+
 public:
     explicit DataHandler(QObject* parent, NetworkHandler* netHandler);
 
-    void startDB();
+    void feedNewMessagesToModel(const int& env_id);
+
 
 public slots:
     void handleNewData(const QJsonObject& net_message);
+
 
 private:
     void handleFetchAllResult(const QJsonObject& net_message);
 
     void sendReqForChatEnvMessages(const int& env_id);
 
+    void startDB();
 
 signals:
     void newMessageReceived(const QJsonObject& message_info);
