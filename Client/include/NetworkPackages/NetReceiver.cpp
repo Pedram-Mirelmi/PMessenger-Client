@@ -35,6 +35,7 @@ void NetMessageReceiver::tryToParsMessage()
     }
     if ((m_header_has_been_read) && (this->m_inbuff.size() >= m_current_header))
     {
+//        auto new_net_message = QJsonDocument::fromJson(m_inbuff.first(m_current_header)).object();
         emit this->newNetMessageArrived(QJsonDocument::fromJson(m_inbuff.first(m_current_header)).object());
         this->m_inbuff.remove(0, m_current_header);
         this->m_header_has_been_read = false;

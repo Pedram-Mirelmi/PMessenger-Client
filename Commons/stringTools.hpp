@@ -1,9 +1,11 @@
+#pragma once
+
 #include <memory>
 #include <string>
 #include <stdexcept>
 #include <sstream>
 
-std::string toRaw(std::string str)
+std::string toRaw(const std::string& str)
 {
     std::stringstream s;
     for (const char& chr : str)
@@ -23,6 +25,7 @@ std::string toRaw(std::string str)
 
 
 
+
 template<typename ... Args>
 std::string string_format( const std::string& format, Args ... args )
 {
@@ -33,3 +36,5 @@ std::string string_format( const std::string& format, Args ... args )
     std::snprintf( buf.get(), size, format.c_str(), args ... );
     return std::string( buf.get(), buf.get() + size - 1 ); // We don't want the '\0' inside
 }
+
+
