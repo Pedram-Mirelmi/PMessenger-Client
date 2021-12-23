@@ -2,6 +2,8 @@ QT += quick core network sql
 
 CONFIG += c++20
 
+LIBS += -lfmt
+
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
@@ -9,11 +11,13 @@ CONFIG += c++20
 SOURCES += \
     include/DataHandlingPackages/DataBase.cpp \
     include/DataHandlingPackages/DataHandler.cpp \
-    include/DataHandlingPackages/MainDataModel.cpp \
+    include/DataHandlingPackages/models/ConversationsListModel.cpp \
+    include/DataHandlingPackages/models/MessageListModel.cpp \
     include/MainApp.cpp \
     include/NetworkPackages/NetReceiver.cpp \
     include/NetworkPackages/NetSender.cpp \
     include/NetworkPackages/NetworkHandler.cpp \
+    include/Others/stringTools.cpp \
     main.cpp
 
 RESOURCES += qml.qrc
@@ -34,11 +38,13 @@ HEADERS += \
     include/DataHandlingPackages/DataHandler.hpp \
     include/ClientKeywords.hpp \
     include/CustomTypes/TSQByteArray.h \
-    include/DataHandlingPackages/MainDataModel.hpp \
+    include/DataHandlingPackages/models/ConversationsListModel.hpp \
+    include/DataHandlingPackages/models/ItemsStructures.hpp \
+    include/DataHandlingPackages/models/MessageListModel.hpp \
     include/MainApp.hpp \
     include/NetworkPackages/NetReceiver.hpp \
     include/NetworkPackages/NetSender.hpp \
     include/NetworkPackages/NetworkHandler.hpp \
-    include/Others/format.hpp
+    include/Others/format.hpp \
 
 DISTFILES +=
