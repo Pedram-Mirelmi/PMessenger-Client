@@ -96,6 +96,70 @@ public:
         }
     };
 
+    uint64_t insertPrivateChatBetween(uint64_t first, uint64_t second)
+    {
+        using namespace KeyWords;
+        auto create_env_Qry = "INSERT INTO chat_envs() VALUES ();";
+        auto created_env_id = this->getLastInsertId();
+        auto create_private_chat_query = fmt::format("INSERT INTO private_chats(env_id, first_person, second_person) "
+                                                     "VALUES ({},            {},         {});",
+                                                             created_env_id, first,      second);
+        auto add_creator = fmt::format("INSERT INTO chat_attends(user_id, env_id) "
+                                        "VALUES ({},    {});",
+                                                first, created_env_id);
+        auto add_other = fmt::format("INSERT INTO chat_attends(user_id, env_id) "
+                                     "VALUES ({},     {});",
+                                              second, created_env_id);
+
+        bool successful1, successful2, successful3;
+        
+        this->executeQry(create_env_Qry, successful1);
+        this->executeQry(add_creator, successful2);
+        this->executeQry(add_other, successful3);
+        
+        return successful1 && successful2 && successful3 ? created_env_id : 0;
+    }
+
+    uint64_t insertNewTextMessage(uint64_t owner_id, uint64_t env_id, const char* message_text)
+    {
+        using namespace KeyWords;
+        auto create_message_query = fmt::format("INSERT INTO messages(env_id, owner_id) "
+                                                "VALUES({},     {});",
+                                                                                               env_id, owner_id);
+        bool succusfull1, succesfull2;
+        this->executeQry(create_message_query, succusfull1);
+        if (succusfull1)
+        {
+            auto created_message_id = this->getLastInsertId();
+            auto create_text_message_query = fmt::format("INSERT INTO text_messages(message_id, message_text) "
+                                                        "VALUES({},                 {}",
+                                                                created_message_id, toRaw(message_text));
+            this->executeQry(create_message_query, succesfull2);
+            return succesfull2 ? created_message_id : 0;
+        }
+        return 0;
+    }
+
+    uint64_t insertNewUser(const char* username, const char* password)
+    {
+        using namespace KeyWords;
+        auto query = fmt::format("INSERT INTO users(username, password)"
+                                 "VALUES ('{}',      '{}');",
+                                           username, password);
+       
+        bool successful;
+        this->executeQry(query, successful);
+        return successful ? this->getLastInsertId() : 0;
+    }
+
+protected:
+
+    uint64_t getLastInsertId()
+    {
+        JsonObj result;
+        this->singleSELECT("SELECT LAST_INSERT_ID() AS id;", result);
+        return result["id"].asUInt64();
+    }
 
 private:
     inline void setCurrentColumns(msg_t& columns_list, sql::ResultSet* result_set)
@@ -105,5 +169,6 @@ private:
         for (unsigned int i = 1; i <= n; i++)
             columns_list.append(meta_data->getColumnName(i).c_str());
     }
+
 
 };

@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
-// should be converted into enum class later
+
+// net message types should be converted into an enum class later for perfomance in server
 
 namespace KeyWords
 {
@@ -78,22 +79,16 @@ constexpr auto USER_INFO = "user_info";
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
-    FETCH_ALL after very first time that user installs and opens the application and logins or registers and the app has NO DATA
-    in the first stage we just send the chat environment that user attends with basic informaions about them. next step client will ask for messages in environments with GET_ENV_MESSAGES
+    FETCH after everytime that user get online sends this request to get anything new and update itself.
+    for now (this version) we just send the chat environments that user attends with basic informaions about them. next step client will ask for messages in environments with GET_ENV_MESSAGES
 
     request:    {NET_MESSAGE_TYPE: FETCH_ALL}
-    response:   {NET_MESSAGE_TYPE: DATA, OUTCOME: TRUE ? FALSE, DETAILS: ?, DATA_TYPE: FETCH_ALL_RESULT, PRIVATE_CHATS: [...], GROUPS: [...], CHANNELS: [...]}
-
-    FETCH after every time the user gets online and request for new messages and possibly new chat envs and basically new events
-    request:    {NET_MESSAGE_TYPE: FETCH}
-    respose:    {NET_MESSAGE_TYPE: DATA, DATA_TYPE: FETCH_RESULT, OUTCOME: TRUE ? FALSE, DETAILS: ?, MESSAGES: [...] and other datas in later versions}
+    response:   {NET_MESSAGE_TYPE: DATA, OUTCOME: TRUE ? FALSE, DETAILS: ?, DATA_TYPE: FETCH_RESULT, PRIVATE_CHATS: [...], GROUPS: [...], CHANNELS: [...], ...}
 */
 constexpr auto FETCH = "fetch";
-constexpr auto FETCH_ALL = "fetch_all";
 constexpr auto DATA = "data";
-constexpr auto DATA_TYPE = "data_details";
+constexpr auto DATA_TYPE = "data_type";
 constexpr auto FETCH_RESULT = "fetch_result";
-constexpr auto FETCH_ALL_RESULT = "fetch_all_result";
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
@@ -118,19 +113,21 @@ constexpr auto RESULT = "result";
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
-    CREATE_NEW_CHAT when user wants to start a new conversation with another using their user_id (got by USER_SEARCH earlier)
-    request:    {NET_MESSAGE_TYPE: CREATE_NEW_CHAT, user_id: ...}
-    response:   {NET_MESSAGE_TYPE: CHAT_CREATION_CONFIRMATION, ENV_INFO: {...} }
+    CREATE_NEW_PRIVATE_CHAT when user wants to start a new conversation with another using their user_id (got by USER_SEARCH earlier)
+    request:    {NET_MESSAGE_TYPE: CREATE_NEW_PRIVATE_CHAT, user_id: ...}
+    response:   {NET_MESSAGE_TYPE: CHAT_CREATION_CONFIRMATION, ENV_INFO: {ENV_TYPE: PRIVATE_CHAT, env_id: ...} }
 
 */
-constexpr auto CREATE_NEW_CHAT = "create_new_chat";
+constexpr auto CREATE_NEW_PRIVATE_CHAT = "create_new_private_chat";
 constexpr auto CHAT_CREATION_CONFIRMATION = "chat_creation_confirmation";
 constexpr auto ENV_INFO = "env_info";
+constexpr auto ENV_TYPE = "env_type";
+constexpr auto PRIVATE_CHAT = "private_chat";
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
     SEND_NEW_MESSAGE when user sends a new message on an "env_id" chat environment
-    request:    {NET_MESSAGE_TYPE: SEND_NEW_MESSAGE, MESSAGE_TYPE: ['T' for text_message OR other message types in later versions ...], MESSAGE_INFO: {...}}
-    response:   {NET_MESSAGE_TYPE: DATA, DATA_TYPE: MESSAGE_SENT_CONFIRMAION, MESSAGE_TYPE: [TEXT_MESSAGE for text OR other message types in later versions], MESSAGE_INFO: {...} }
+    request:    {NET_MESSAGE_TYPE: SEND_NEW_MESSAGE, MESSAGE_INFO: {...}}
+    response:   {NET_MESSAGE_TYPE: DATA, DATA_TYPE: MESSAGE_SENT_CONFIRMAION, MESSAGE_INFO: {...}}
 */
 constexpr auto SEND_NEW_MESSAGE = "send_new_message";
 constexpr auto MESSAGE_TYPE = "message_type";
@@ -141,12 +138,10 @@ constexpr auto TEXT_MESSAGE = "text_message";
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
     MESSAGE when server wants to deliver any kind of message (seen or not text or picture or ...)
-    1-way server message:   {MESSAGE_TYPE: DATA, DATA_TYPE: MESSAGE, PRIVATE_MESSAGES: [...], GROUP_MESSAGES: [...], CHANNEL_MESSAGES: [...]}
+    1-way server message:   {MESSAGE_TYPE: DATA, DATA_TYPE: MESSAGE, TEXT_MESSAGES: [...], ...}
 */
 constexpr auto MESSAGE = "message";
-constexpr auto PRIVATE_MESSAGES = "private_messages";
-constexpr auto GROUP_MESSAGES = "group_messages";
-constexpr auto CHANNEL_MESSAGES = "channel_messages";
+constexpr auto TEXT_MESSAGES = "text_messages";
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // constexpr auto TIME = "time";
 // constexpr auto GENDER = "gender";
@@ -157,7 +152,7 @@ constexpr auto CHANNEL_MESSAGES = "channel_messages";
 // constexpr auto USER_INFO = "user_info";
 // constexpr auto SUCCESS = "success";
 
-constexpr auto ENV_TYPE = "env_type";
+
 //constexpr auto TEXT_MESSAGE = "text_message";
 
 
@@ -165,10 +160,6 @@ constexpr auto ENV_TYPE = "env_type";
 
 
 constexpr auto CLOSE_CONNECTION = "close_connection"; // when client or server want to close the connection.
-
-
-constexpr bool TRUEE = true;
-constexpr bool FALSEE = false;
 
 constexpr auto ERROR_NO = "error_no";
 constexpr auto E1 = "Wrong password!";

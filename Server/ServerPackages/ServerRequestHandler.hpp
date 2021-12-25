@@ -18,9 +18,7 @@ public:
     DBConnector db;
     ServerRequestHandler(id_T& user_id)
         : m_user_id(user_id)
-    {
-
-    }
+    {}
 
     void handle(JsonObj& request, JsonObj& response)
     {
@@ -48,20 +46,21 @@ public:
         if (net_msg_type == SEND_NEW_MESSAGE)
         {
             this->handleNewMessage(request, response);
-            response[NET_MESSAGE_TYPE] = MESSAGE_SENT_CONFIRMATION;
+            response[NET_MESSAGE_TYPE] = DATA;
+            response[DATA_TYPE] = MESSAGE_SENT_CONFIRMATION;
             return;
         }
-        if (net_msg_type == CREATE_NEW_CHAT)
+        if (net_msg_type == CREATE_NEW_PRIVATE_CHAT)
         {
-            this->handleCreateNewChat(request, response);
+            this->handleCreateNewPrivateChat(request, response);
             response[NET_MESSAGE_TYPE] = CHAT_CREATION_CONFIRMATION;
             return;
         }
-        if (net_msg_type == FETCH_ALL)
+        if (net_msg_type == FETCH)
         {
-            this->handleFetchAll(request, response);
+            this->handleFetch(request, response);
             response[NET_MESSAGE_TYPE] = DATA;
-            response[NET_MESSAGE_TYPE] = FETCH_ALL_RESULT;
+            response[DATA_TYPE] = FETCH_RESULT;
             return;
         }
     }
@@ -84,20 +83,15 @@ public:
     void handleRegister(JsonObj& request, JsonObj& response)
     {
         using namespace KeyWords;
-        auto query = fmt::format("INSERT INTO users(username, password) VALUES ('{}', '{}');",
-                                    request[USERNAME].asString(), request[PASSWORD].asString());
-       
-        bool successful;
-        response[DETAILS] = this->db.executeQry(query, successful);
-        int user_id = getLastInsertId();
-        if (successful)
+        auto created_user_id = this->db.insertNewUser(request[USERNAME].asCString(), request[PASSWORD].asCString());
+        if (created_user_id)
         {
-            auto Qry = fmt::format("SELECT * FROM users WHERE user_id = {};", "LAST_INSERT_ID()");
+            auto Qry = fmt::format("SELECT * FROM users WHERE user_id = {};", created_user_id);
             this->db.singleSELECT(Qry, response[USER_INFO]);
-            response[SUCCESFUL] = TRUEE;
+            response[SUCCESFUL] = true;
             return;
         }
-        response[SUCCESFUL] = FALSEE;
+        response[SUCCESFUL] = false;
     }
 
     void handleLogin(JsonObj& request, JsonObj& response)
@@ -107,66 +101,61 @@ public:
         this->db.SELECT(Qry, response);
         if (response[PASSWORD] == request[PASSWORD])
         {
-            response[SUCCESFUL] = TRUEE;
+            response[SUCCESFUL] = true;
             return;
         }
         response.clear();
-        response[SUCCESFUL] = FALSEE;        
+        response[SUCCESFUL] = false;        
         return;
     }
 
-    void handleFetchAll(JsonObj& request, JsonObj& response)
+    void handleFetch(JsonObj& request, JsonObj& response)
     {
         using namespace KeyWords;
-        auto privates_query = fmt::format("SELECT * from private_attendees WHERE user_id = {};", this->m_user_id);
-        auto groups_query = fmt::format("SELECT * from groups_attendees WHERE user_id = {};", this->m_user_id);
-        auto channels_query = fmt::format("SELECT * from channel_attendees WHERE user_id = {};", this->m_user_id);
-        JsonObj privates, groups, channels;
+        auto privates_query = fmt::format("SELECT * from private_chats_view WHERE first_person = {} OR second_person = {};", this->m_user_id, this->m_user_id);
+        // auto groups_query = fmt::format("SELECT * from groups_attendees WHERE user_id = {};", this->m_user_id);
+        // auto channels_query = fmt::format("SELECT * from channel_attendees WHERE user_id = {};", this->m_user_id);
+        JsonObj privates;
+                // groups,
+                // channels;
         std::cout << this->db.SELECT(privates_query, privates);
-        std::cout << this->db.SELECT(groups_query, groups);
-        std::cout << this->db.SELECT(channels_query, channels);
         response[PRIVATE_CHATS] = privates;
-        response[GROUP_CHATS] = groups;
-        response[CHANNELS] = channels;
+        // response[GROUP_CHATS] = groups;
+        // response[CHANNELS] = channels;
     }
 
+    void handleGetEnvMessages(const JsonObj& request, JsonObj& response)
+    {
+        using namespace KeyWords;
+        auto text_messages_query = fmt::format("SELECT * from text_messages_view WHERE env_id={}", request[ENV_ID].asUInt64());
+        JsonObj text_messages;
+        this->db.SELECT(text_messages_query, text_messages);
+        response[TEXT_MESSAGES] = text_messages;
+    };
 
     void handleUserSearch(JsonObj& request, JsonObj& response)
     {
         using namespace KeyWords;
-        auto Qry = fmt::format("SELECT * FROM {} WHERE username LIKE {} OR name LIKE {}", USERS, request[SEARCH_PHRASE].asString(), request[SEARCH_PHRASE].asString());
+        auto Qry = fmt::format("SELECT * FROM users WHERE username LIKE {} OR name LIKE {}", request[SEARCH_PHRASE].asString(), request[SEARCH_PHRASE].asString());
         Json::Value search_result;
         this->db.SELECT(Qry, search_result);
         response[RESULT] = search_result;
         response[SUCCESFUL] = true;
     }
 
-    void handleCreateNewChat(JsonObj& request, JsonObj& response)
+    void handleCreateNewPrivateChat(JsonObj& request, JsonObj& response)
     {
         using namespace KeyWords;
-        auto create_env_Qry = fmt::format("INSERT INTO {}() VALUES ();",
-                        MESSAGES, CHAT_ENVS);
-        JsonObj temp;
-        this->db.singleSELECT("SELECT LAST_INSERT_ID();", temp);
-        auto env_id = temp[0].asUInt64();
-        auto add_first_user = fmt::format("INSERT INTO {}({}, {}) VALUES ({}, {});",
-                                        CHAT_ATTENDS, USER_ID, ENV_ID, this->m_user_id, env_id);
-        auto add_second_user = fmt::format("INSERT INTO {}({}, {}) VALUES ({}, {});",
-                                        CHAT_ATTENDS, USER_ID, ENV_ID, request[CONTACT_ID].asUInt64(), env_id);
-
-        bool successful1, successful2;
-        
-        this->db.executeQry(create_env_Qry, successful1);
-        this->db.executeQry(add_first_user, successful1);
-        this->db.executeQry(add_second_user, successful2);
-        if (successful1 && successful2)
+        auto created_env_id = this->db.insertPrivateChatBetween(this->m_user_id, request[USER_ID].asUInt64());
+        if (created_env_id)
         {
-            response[CONTACT_ID] = request[CONTACT_ID];
-            response[ENV_ID] = env_id;
-            response[SUCCESFUL] = TRUEE;
+            auto get_info_query = fmt::format("SELECT * FROM private_chats_view WHERE env_id = {}", created_env_id);
+            this->db.singleSELECT(get_info_query, response[ENV_INFO]);
+            response[ENV_INFO][ENV_TYPE] = PRIVATE_CHAT;
+            response[SUCCESFUL] = true;
             return;
         }
-        response[SUCCESFUL] = FALSEE;
+        response[SUCCESFUL] = false;
     }
 
     void handleNewMessage(JsonObj& request, JsonObj& response)
@@ -180,27 +169,15 @@ public:
     void handleNewTextMessage(JsonObj& request, JsonObj& response)
     {
         using namespace KeyWords;
-        auto insert_message_Qry = fmt::format("INSERT INTO messages({}, {}) VALUES ('{}', '{}');",
-                                OWNER_ID, ENV_ID, request[ENV_ID].asInt(), this->m_user_id);
-        int message_id;
-        bool successful;
-        std:: cout << this->db.executeQry(insert_message_Qry, successful);
-        if(successful)
-            message_id = this->getLastInsertId();
-        else
-            return;
-        auto insert_text_message_Qry = fmt::format
-                                    ("INSERT INTO text_messages(message_id, message_text) VALUES({}, {});",
-                                        message_id, toRaw(request[MESSAGE_TEXT].asString()));
-        std::cout << this->db.executeQry(insert_message_Qry, successful);
-        if (successful)
+        auto created_message_id = this->db.insertNewTextMessage(this->m_user_id, request[ENV_ID].asUInt64(), request[MESSAGE_TEXT].asCString());
+        if (created_message_id)
         {
-            auto Qry = fmt::format("SELECT * FROM messages_view WHERE message_id = {};", message_id);
-            this->db.singleSELECT(Qry, response[MESSAGE_INFO]);
-            response[SUCCESFUL] = TRUEE;
+            auto get_info_query = fmt::format("SELECT * FROM text_messages_view WHERE message_id = {};", created_message_id);
+            this->db.singleSELECT(get_info_query, response[MESSAGE_INFO]);
+            response[SUCCESFUL] = true;
             return;
         }
-        response[SUCCESFUL] = FALSEE;
+        response[SUCCESFUL] = false;
     }
 
     void addContact(JsonObj& request, JsonObj& response)
@@ -212,7 +189,7 @@ public:
                             request[CONTACT_ID].asString());
         
         response[DETAILS] = this->db.executeQry(query, successful); 
-        response[SUCCESFUL] = successful ? TRUEE : FALSEE;
+        response[SUCCESFUL] = successful;
         return;
     }   
 
@@ -221,13 +198,5 @@ public:
         
     }
 
-
-private:
-    int getLastInsertId()
-    {
-        JsonObj result;
-        this->db.singleSELECT("SELECT LAST_INSERT_ID() AS id;", result);
-        return result["id"].asInt64();
-    }
 };
 
