@@ -23,7 +23,7 @@ CREATE TABLE contacts
 CREATE TABLE chat_envs
 (
     env_id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY ,
-    created_at      DATETIME NOT NULL DEFAULT Now()
+    created_at      DATETIME NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE private_chats
@@ -84,20 +84,5 @@ CREATE VIEW private_chats_view AS
     LEFT JOIN private_chats pc
         ON ce.env_id = pc.env_id;
 
-CREATE VIEW private_attendees AS
-    SELECT
-        ce.env_id,
-        ce.created_at,
-        pc.first_person,
-        pc.second_person,
-        ca.user_id
-    FROM private_chats pc
-    INNER JOIN chat_envs ce
-        ON pc.env_id = ce.env_id
-    INNER JOIN chat_attends ca
-        ON ce.env_id = ca.env_id;
 
 
-
-SELECT * FROM users;
-SELECT LAST_INSERT_ID();
