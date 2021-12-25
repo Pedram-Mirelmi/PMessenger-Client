@@ -82,8 +82,8 @@ constexpr auto USER_INFO = "user_info";
     FETCH after everytime that user get online sends this request to get anything new and update itself.
     for now (this version) we just send the chat environments that user attends with basic informaions about them. next step client will ask for messages in environments with GET_ENV_MESSAGES
 
-    request:    {NET_MESSAGE_TYPE: FETCH_ALL}
-    response:   {NET_MESSAGE_TYPE: DATA, OUTCOME: TRUE ? FALSE, DETAILS: ?, DATA_TYPE: FETCH_RESULT, PRIVATE_CHATS: [...], GROUPS: [...], CHANNELS: [...], ...}
+    request:    {NET_MESSAGE_TYPE: FETCH}
+    response:   {NET_MESSAGE_TYPE: DATA, DATA_TYPE: FETCH_RESULT, PRIVATE_CHATS: [...], GROUPS: [...], CHANNELS: [...], ...}
 */
 constexpr auto FETCH = "fetch";
 constexpr auto DATA = "data";
