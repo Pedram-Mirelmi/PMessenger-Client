@@ -9,8 +9,8 @@
 #include <QDir>
 #include <QFile>
 #include <QObject>
-#include "./models/ItemsStructures.hpp"
 #include "../Others/stringTools.hpp"
+#include "../Others/TypeDefs.hpp"
 
 struct Message;
 
@@ -28,9 +28,13 @@ public:
 
     bool tryToInit();
 
-    bool insertPrivateEnv(const QJsonObject& env);
+    void tryToInsertPrivateEnvs(const QJsonValueRef& envs);
 
-    void insertPrivateMessages(const QJsonArray& messages);
+    void insertPrivateEnvs(const QJsonValueRef& envs);
+
+    void insertSinglePrivateEnv(const QJsonObject& env_info);
+
+    void insertTextMessages(const QJsonArray& messages);
 
     void insertGroupMessages(const QJsonArray& messages);
 
@@ -41,21 +45,26 @@ public:
     void insertChannelMessages(const QJsonArray& messages);
 
 private:
+    void convertToHash(InfoContainer &target, const QJsonObject &source);
 
-    void insertSinglePrivateMessage(const QJsonObject& msg_info);
+    void insertSingleTextMessage(const QJsonObject& msg_info);
 
     bool tryToCreateDBFile();
 
     bool createTables();
 
-    bool SELECT(QVector<QHash<const char*, QVariant>>& result_set, char query_str[]) const;
+    bool SELECT(QVector<InfoContainer>& result_set, const char query_str[]) const;
 
     bool execOtherQry(const char query_str[]);
 
     QJsonArray convertToNormalForm(const QJsonArray& data);
 
+    bool envExists(const quint64& env_id) const;
+
 signals:
-    void newMessageInserted(const QJsonObject& msg_info);
+    void newTextMessageInserted(const QJsonObject& msg_info);
+
+    void needPrivateEnvDetails(const quint64 &env_id); // need info and messages
 };
 
 

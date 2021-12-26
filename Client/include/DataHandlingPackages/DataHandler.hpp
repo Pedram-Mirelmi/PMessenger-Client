@@ -38,9 +38,9 @@ public slots:
 
 
 private:
-    void handleFetchAllResult(const QJsonObject& net_message);
+    void handleFetchResult(const QJsonObject& net_message);
 
-    void sendReqForChatEnvMessages(const int& env_id);
+    void sendReqForPrivateEnvDetails(const int& env_id);
 
     void startDB();
 
@@ -48,7 +48,7 @@ signals:
     void newMessageReceived(const QJsonObject& message_info);
 
 private:
-
+    void convertToHash(InfoContainer& target, const QJsonObject& source);
 };
 
 

@@ -1,6 +1,7 @@
 #include "ConversationsListModel.hpp"
 #include "../Commons/KeyWords.hpp"
 #include "../../ClientKeywords.hpp"
+#include <QJsonObject>
 
 ConversationsListModel::ConversationsListModel(QObject *parent)
     : QAbstractListModel(parent)
@@ -76,10 +77,30 @@ QHash<int, QByteArray> ConversationsListModel::roleNames() const
 
 void ConversationsListModel::sortConversatoins() // insertion sort
 {
-    for (auto i = this->m_conversations.size() - 1; i >= 0; i--)
-        for (quint64 j = i - 1; j >= 1; j--)
-            if (this->m_conversations[j].last_message_id < this->m_conversations[j - 1].last_message_id)
-                swapItems(j, j-1);
+    using namespace KeyWords;
+    for (auto i = 0; i < this->m_conversations.size() - 1; i++)
+    {
+        auto j = i + 1;
+        while (j >= 1 && this->m_conversations[j - 1].last_message_id > this->m_conversations[j].last_message_id)
+        {
+            swapItems(j, j - 1);
+            j--;
+        }
+    }
+}
+
+void ConversationsListModel::popUpConversation(const QJsonObject& new_inserted_msg)
+{
+    using namespace KeyWords;
+    auto conv_index_in_model = this->getConversation(0, this->m_conversations.size(),
+                                                            new_inserted_msg[ENV_ID].toInteger());
+    if ((quint64)new_inserted_msg[MESSAGE_ID].toInteger() > this->m_conversations[conv_index_in_model].last_message_id)
+        while (conv_index_in_model < this->m_conversations.size() - 1 &&
+               this->m_conversations[conv_index_in_model].last_message_id > this->m_conversations[conv_index_in_model].last_message_id)
+        {
+            this->swapItems(conv_index_in_model, conv_index_in_model + 1);
+            conv_index_in_model++;
+        }
 }
 
 void ConversationsListModel::swapItems(const quint64 &first, const quint64 &second)
@@ -91,9 +112,15 @@ void ConversationsListModel::swapItems(const quint64 &first, const quint64 &seco
     emit this->dataChanged(this->index(second, 0), this->index(second, 0), QVector<int>() << Roles::last_message_id << Roles::name);
 }
 
-void ConversationsListModel::popUpConversation(const quint32& index_in_model)
+quint32 ConversationsListModel::getConversation(const quint32& l, const quint32& r, const quint64& env_id)
 {
-    this->beginMoveRows(QModelIndex(), index_in_model, index_in_model, QModelIndex(), 0);
-    this->moveRow(QModelIndex(), index_in_model, QModelIndex(), 0);
-    this->endMoveRows();
+    if (r >= l) {
+        int mid = l + (r - l) / 2;
+        if (this->m_conversations[mid].env_id == env_id)
+            return mid;
+        if (this->m_conversations[mid].env_id > env_id)
+            return this->getConversation(l, mid - 1, env_id);
+        return getConversation(mid + 1, r, env_id);
+    }
+    return -1;
 }

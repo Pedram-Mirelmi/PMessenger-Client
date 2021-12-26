@@ -5,31 +5,14 @@
 
 namespace KeyWords
 {
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Database keywords
-constexpr auto SELECT = "SELECT";
-constexpr auto INSERT = "INSERT";
-constexpr auto UPDATE = "UPDATE";
-constexpr auto INTO = "INTO";
-constexpr auto VALUES = "VALUES";
-constexpr auto SET = "SET";
-constexpr auto FROM = "FROM";
-constexpr auto WHERE = "WHERE";
-constexpr auto JOIN = "JOIN";
-constexpr auto ON = "ON";
-constexpr auto OR = "OR";
-constexpr auto USING = "USING";
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Database tables
-constexpr auto USERS = "users";
-constexpr auto CONTACTS = "contacts";
-constexpr auto CHAT_ENVS = "chat_envs";
-constexpr auto CHAT_ATTENDS = "chat_attends";
-constexpr auto MESSAGES = "messages";
-constexpr auto PRIVATE_CHATS = "private_chats";
-constexpr auto GROUP_CHATS = "group_chats";
-constexpr auto CHANNELS = "channels";
+// constexpr auto USERS = "users";
+// constexpr auto CONTACTS = "contacts";
+// constexpr auto CHAT_ENVS = "chat_envs";
+// constexpr auto CHAT_ATTENDS = "chat_attends";
+// constexpr auto MESSAGES = "messages";
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // tables keywords
@@ -83,21 +66,26 @@ constexpr auto USER_INFO = "user_info";
     for now (this version) we just send the chat environments that user attends with basic informaions about them. next step client will ask for messages in environments with GET_ENV_MESSAGES
 
     request:    {NET_MESSAGE_TYPE: FETCH}
-    response:   {NET_MESSAGE_TYPE: DATA, DATA_TYPE: FETCH_RESULT, PRIVATE_CHATS: [...], GROUPS: [...], CHANNELS: [...], ...}
+    response:   {NET_MESSAGE_TYPE: DATA, DATA_TYPE: FETCH_RESULT, PRIVATE_CHATS: [...], GROUP_CHATS: [...], CHANNELS: [...], ...}
 */
 constexpr auto FETCH = "fetch";
 constexpr auto DATA = "data";
 constexpr auto DATA_TYPE = "data_type";
 constexpr auto FETCH_RESULT = "fetch_result";
+constexpr auto PRIVATE_CHATS = "private_chats";
+constexpr auto GROUP_CHATS = "group_chats";
+constexpr auto CHANNELS = "channels";
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
-    GET_ENV_MESSAGES when client requests for messages in message environment with id of "env_id"
-    request:    {MESSAGE_TYPE: GET_ENV_MESSAGES, ENV_ID: ...}
-    response:   the "MESSAGE" message type that's explained later in this file
-
+    GET_PRIVATE_ENV_DETAILS when client requests for messages in a private_env with id of "env_id"
+    request:    {MESSAGE_TYPE: GET_PRIVATE_ENV_DETAILS, ENV_ID: ...}
+    response:   {NET_MESSAGE_TYPE: DATA, DATA_TYPE: ENV_DETAILS, ENV_MESSAGES:[TEXT_MESSAGES: [], ... ], ENV_INFO: {}}
 */
-constexpr auto GET_ENV_MESSAGES = "get_env_messages";
+constexpr auto GET_PRIVATE_ENV_DETAILS = "get_private_env_details";
+constexpr auto ENV_DETAILS = "env_details";
+constexpr auto ENV_MESSAGES = "env_messages";
+constexpr auto ENV_INFO = "env_info";
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
@@ -120,7 +108,6 @@ constexpr auto RESULT = "result";
 */
 constexpr auto CREATE_NEW_PRIVATE_CHAT = "create_new_private_chat";
 constexpr auto CHAT_CREATION_CONFIRMATION = "chat_creation_confirmation";
-constexpr auto ENV_INFO = "env_info";
 constexpr auto ENV_TYPE = "env_type";
 constexpr auto PRIVATE_CHAT = "private_chat";
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

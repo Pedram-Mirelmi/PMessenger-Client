@@ -122,17 +122,32 @@ bool DataBase::createTables()
             create_table.exec(text_messages_view_creatoin);
 }
 
-bool DataBase::insertPrivateEnv(const QJsonObject &env)
+void DataBase::tryToInsertPrivateEnvs(const QJsonValueRef &envs)
 {
     using namespace KeyWords;
-    auto general_env_insert_Qry = fmt::format("INSERT INTO chat_envs(env_id, participates) "
-                                                "VALUES({}, 1);",
-                                                env[ENV_ID].toInt());
-    auto private_env_insert_Qry = fmt::format("INSERT INTO private_chats(env_id, first_person, second_person) "
-                                                "VALUES({},          {},                        {});",
-                                                env[ENV_ID].toInt(), env[FIRST_PERSON].toInt(), env[SECOND_PERSON].toInt());
-    this->execOtherQry(general_env_insert_Qry.c_str());
-    return this->execOtherQry(private_env_insert_Qry.c_str());
+    for (const auto &private_env_variant : envs.toArray())
+        if (!envExists(private_env_variant.toInteger()))
+            emit this->needPrivateEnvDetails(private_env_variant.toInteger());
+}
+
+void DataBase::insertPrivateEnvs(const QJsonValueRef &envs)
+{
+    for (const auto& env_info : envs.toArray())
+        insertSinglePrivateEnv(env_info.toObject());
+}
+
+void DataBase::insertSinglePrivateEnv(const QJsonObject &env_info)
+{
+    using namespace KeyWords;
+    const auto create_env_query = fmt::format("INSERT INTO chat_envs(env_id, participates) "
+                                              "VALUES({}, 1);",
+                                              env_info[ENV_ID].toInteger());
+    this->execOtherQry(create_env_query.c_str());
+    const auto create_private_query = fmt::format("INSERT INTO private_chats(env_id, first_person, second_person) "
+                                                  "VALUES({},   {},     {});",
+                                                  env_info[ENV_ID].toInteger(),
+                                                  env_info[FIRST_PERSON].toInteger(),
+                                                  env_info[SECOND_PERSON].toInteger());
 }
 
 // public
@@ -167,34 +182,35 @@ void DataBase::insertChannelMessages(const QJsonArray &messages)
 
 
 // public
-void DataBase::insertPrivateMessages(const QJsonArray &messages)
+void DataBase::insertTextMessages(const QJsonArray &messages)
 {
     using namespace KeyWords;
     for (const auto& message : this->convertToNormalForm(messages))
-        this->insertSinglePrivateMessage(message.toObject());
+        this->insertSingleTextMessage(message.toObject());
 }
 
 // private
-void DataBase::insertSinglePrivateMessage(const QJsonObject& msg_info)
+void DataBase::insertSingleTextMessage(const QJsonObject& msg_info)
 {
     using namespace KeyWords;
     bool ok;
     auto general_message_insert_query = fmt::format(
                 "INSERT INTO messages(message_id, owner_id, env_id, created_at) VALUES "
                 "                     ({},        {},       {},     '{}' )",
-                msg_info[MESSAGE_ID].toInt(), msg_info[OWNER_ID].toInt(), msg_info[ENV_ID].toInt(), msg_info[CREATED_AT].toString().toStdString());
+                msg_info[MESSAGE_ID].toInt(), msg_info[OWNER_ID].toInt(),
+                msg_info[ENV_ID].toInt(), msg_info[CREATED_AT].toString().toStdString());
     ok = this->execOtherQry(general_message_insert_query.c_str());
     auto text_message_insert_query = fmt::format(
-                    "INSERT INTO text_messages(message_id, message_text) VALUES "
-                    "                          ({},          '{}')",
-                                               msg_info[MESSAGE_ID].toInt(), toRaw(msg_info[MESSAGE_TEXT].toString().toStdString()));
+                    "INSERT INTO text_messages(message_id, message_text) "
+                    "VALUES ({},          '{}')",
+                    msg_info[MESSAGE_ID].toInt(), toRaw(msg_info[MESSAGE_TEXT].toString().toStdString()));
     ok = this->execOtherQry(text_message_insert_query.c_str()) && ok;
-//    if (msg_info.contains(SEEN) && !msg_info[SEEN].toBool() && ok)
-//        emit this->newMessageInserted(msg_info);
+    if (msg_info.contains(SEEN) && !msg_info[SEEN].toBool() && ok)
+        emit this->newTextMessageInserted(msg_info);
 }
 
 // private
-bool DataBase::SELECT(QVector<QHash<const char*, QVariant>> &result_set, char query_str[]) const
+bool DataBase::SELECT(QVector<InfoContainer> &result_set, const char query_str[]) const
 {
     QSqlQuery query(this->db);
     bool ok = query.exec(query_str);
@@ -231,4 +247,15 @@ QJsonArray DataBase::convertToNormalForm(const QJsonArray &data)
     return result;
 }
 
+bool DataBase::envExists(const quint64 &env_id) const
+{
+    QVector<QHash<const char*, QVariant>> arr;
+    this->SELECT(arr, fmt::format("SELECT * FROM chat_envs WHERE env_id={}", (uint64_t)env_id).c_str());
+    return arr.isEmpty();
+}
 
+void DataBase::convertToHash(InfoContainer &target, const QJsonObject &source)
+{
+    for (const auto& key : source.keys())
+        target[key.toStdString().c_str()] = source[key].toVariant();
+}

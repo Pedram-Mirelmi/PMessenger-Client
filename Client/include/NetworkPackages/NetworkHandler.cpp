@@ -50,11 +50,11 @@ void NetworkHandler::sendLoginReq(const QString &username, const QString &passwo
 }
 
 // Q_INVOKSBLE
-void NetworkHandler::sendFetchAllReq()
+void NetworkHandler::sendFetchReq()
 {
     using namespace KeyWords;
     QJsonObject req;
-    req[NET_MESSAGE_TYPE] = FETCH_ALL;
+    req[NET_MESSAGE_TYPE] = FETCH;
     this->m_sender->sendMessage(req);
 }
 

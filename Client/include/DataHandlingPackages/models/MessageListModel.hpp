@@ -3,16 +3,15 @@
 #include <QJsonObject>
 #include <QVector>
 #include <QList>
-#include "./ItemsStructures.hpp"
+#include "../../Others/TypeDefs.hpp"
 
 
 class DataHandler;
 
-
 class MessageListModel : public QAbstractListModel
 {
     Q_OBJECT
-
+    quint64 current_env_id;
     friend class DataHandler;
 public:
     explicit MessageListModel(QObject *parent = nullptr);
@@ -38,14 +37,19 @@ public:
 
     QHash<int, QByteArray> roleNames() const override;
 
-    void insertMessage(const QHash<const char*, QVariant> & msg);
-    void insertMessages(QVector<QHash<const char*, QVariant>> &msg_list);
+    void insertMessage(const InfoContainer& msg);
+    void insertMessages(QVector<InfoContainer> &msg_list);
+
+public slots:
+    void considerNewTextMessage(const QJsonObject& msg_info);
 private:
-    QVector<QHash<const char* , QVariant>> m_messages;
+    QVector<InfoContainer> m_messages;
 
     void clearModel();
 
     void swapItems(const quint64 &first, const quint64 &second);
     void sortMessages();
+
+    void convertToHash(InfoContainer& target, const QJsonObject& source); // in place
 };
 

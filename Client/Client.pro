@@ -39,12 +39,13 @@ HEADERS += \
     include/ClientKeywords.hpp \
     include/CustomTypes/TSQByteArray.h \
     include/DataHandlingPackages/models/ConversationsListModel.hpp \
-    include/DataHandlingPackages/models/ItemsStructures.hpp \
     include/DataHandlingPackages/models/MessageListModel.hpp \
     include/MainApp.hpp \
     include/NetworkPackages/NetReceiver.hpp \
     include/NetworkPackages/NetSender.hpp \
     include/NetworkPackages/NetworkHandler.hpp \
+    include/Others/TypeDefs.hpp \
     include/Others/format.hpp \
+    include/Others/stringTools.hpp
 
 DISTFILES +=

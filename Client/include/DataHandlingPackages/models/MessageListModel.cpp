@@ -5,6 +5,8 @@
 #include <QJsonObject>
 #include <QMutex>
 
+
+
 static QMutex insert_lock;
 
 MessageListModel::MessageListModel(QObject *parent)
@@ -85,7 +87,7 @@ QHash<int, QByteArray> MessageListModel::roleNames() const
 };
 
 
-void MessageListModel::insertMessage(const QHash<const char*, QVariant> & msg)
+void MessageListModel::insertMessage(const InfoContainer& msg)
 {
     using namespace KeyWords;
     insert_lock.lock();
@@ -104,11 +106,22 @@ void MessageListModel::insertMessage(const QHash<const char*, QVariant> & msg)
 }
 
 
-void MessageListModel::insertMessages(QVector<QHash<const char*, QVariant>> &msg_list)
+void MessageListModel::insertMessages(QVector<InfoContainer> &msg_list)
 {
     using namespace KeyWords;
     for (const auto& msg_info : msg_list)
         this->insertMessage(msg_info);
+}
+
+void MessageListModel::considerNewTextMessage(const QJsonObject &msg_info)
+{
+    using namespace KeyWords;
+    if ((quint64)msg_info[ENV_ID].toInteger() == this->current_env_id)
+    {
+        InfoContainer model_std_container;
+        this->convertToHash(model_std_container, msg_info);
+        this->insertMessage(model_std_container);
+    }
 }
 
 void MessageListModel::clearModel()
@@ -119,12 +132,21 @@ void MessageListModel::clearModel()
 void MessageListModel::sortMessages() // insertion sort
 {
     using namespace KeyWords;
-    for (auto i = this->m_messages.size() - 2; i >= 0; i--)
+    for (auto i = 0; i < this->m_messages.size() - 1; i++)
     {
         auto j = i + 1;
-        while (this->m_messages[j][MESSAGE_ID].toUInt() > this->m_messages[j + 1][MESSAGE_ID].toUInt())
-            swapItems(j, j + 1);
+        while (j >= 1 && this->m_messages[j - 1][MESSAGE_ID].toUInt() > this->m_messages[j][MESSAGE_ID].toUInt())
+        {
+            swapItems(j, j - 1);
+            j--;
+        }
     }
+}
+
+void MessageListModel::convertToHash(InfoContainer &target, const QJsonObject &source) // in place
+{
+    for (const auto& key : source.keys())
+        target[key.toStdString().c_str()] = source[key].toVariant();
 }
 
 void MessageListModel::swapItems(const quint64 &first, const quint64 &second)

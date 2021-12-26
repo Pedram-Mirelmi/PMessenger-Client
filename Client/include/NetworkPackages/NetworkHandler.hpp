@@ -28,7 +28,7 @@ public:
 
     Q_INVOKABLE void sendRegisterReq(const QString& username, const QString& password);
     Q_INVOKABLE void sendLoginReq(const QString& username, const QString& password);
-    Q_INVOKABLE void sendFetchAllReq();
+    Q_INVOKABLE void sendFetchReq();
 
 
 public slots:

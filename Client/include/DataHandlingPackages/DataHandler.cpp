@@ -8,7 +8,14 @@ DataHandler::DataHandler(QObject *parent, NetworkHandler *netHandler)
       m_net_handler(netHandler),
       m_message_list_model(new MessageListModel(this)),
       m_conversation_list_model(new ConversationsListModel(this))
-{}
+{
+    this->connect(this->m_db, &DataBase::needPrivateEnvDetails,
+                  this, &DataHandler::sendReqForPrivateEnvDetails);
+    this->connect(this->m_db, &DataBase::newTextMessageInserted,
+                  this->m_message_list_model, &MessageListModel::considerNewTextMessage);
+    this->connect(this->m_db, &DataBase::newTextMessageInserted,
+                  this->m_conversation_list_model, &ConversationsListModel::popUpConversation);
+}
 
 void DataHandler::feedNewMessagesToModel(const int &env_id)
 {
@@ -25,7 +32,13 @@ void DataHandler::feedNewMessagesToModel(const int &env_id)
 void DataHandler::startDB()
 {
     if (this->m_db->tryToInit()) // if inited
-        this->m_net_handler->sendFetchAllReq();
+        this->m_net_handler->sendFetchReq();
+}
+
+void DataHandler::convertToHash(InfoContainer &target, const QJsonObject &source)
+{
+    for (const auto& key : source.keys())
+        target[key.toStdString().c_str()] = source[key].toVariant();
 }
 
 // public slot
@@ -33,27 +46,24 @@ void DataHandler::handleNewData(const QJsonObject &net_message)
 {
     using namespace KeyWords;
     auto data_type = net_message[DATA_TYPE];
-    if (data_type == FETCH_ALL_RESULT)
+    if (data_type == FETCH_RESULT)
     {
-        this->handleFetchAllResult(net_message);
+        this->handleFetchResult(net_message);
     }
-    else if (data_type == FETCH_RESULT)
+    else if (data_type == ENV_DETAILS)
     {
-
+        this->m_db->insertSinglePrivateEnv(net_message[ENV_INFO].toObject());
+        this->m_db->insertTextMessages(net_message[TEXT_MESSAGES].toArray());
     }
     else if (data_type == MESSAGE)
     {
-        if (net_message.contains(PRIVATE_MESSAGES))
-            this->m_db->insertPrivateMessages(net_message[PRIVATE_MESSAGES].toArray());
-        if (net_message.contains(GROUP_MESSAGES))
-            this->m_db->insertGroupMessages(net_message[GROUP_MESSAGES].toArray());
-        if(net_message.contains(CHANNEL_MESSAGES))
-            this->m_db->insertChannelMessages(net_message[CHANNEL_MESSAGES].toArray());
+        if (net_message.contains(TEXT_MESSAGES))
+            this->m_db->insertTextMessages(net_message[TEXT_MESSAGES].toArray());
     }
 }
 
 // private
-void DataHandler::handleFetchAllResult(const QJsonObject &net_message)
+void DataHandler::handleFetchResult(const QJsonObject &net_message)
 {
     using namespace KeyWords;
 
@@ -61,28 +71,16 @@ void DataHandler::handleFetchAllResult(const QJsonObject &net_message)
     {
         auto private_chats = net_message[PRIVATE_CHATS].toArray();
         for (const auto& private_env : private_chats)
-            this->m_db->insertPrivateEnv(private_env.toObject());
-    }
-    if (net_message.contains(GROUP_CHATS))
-    {
-        auto group_chats = net_message[GROUP_CHATS].toArray();
-        for (const auto& group_env : group_chats)
-            this->m_db->insertGroupEnv(group_env.toObject());
-    }
-    if (net_message.contains(CHANNEL_MESSAGES))
-    {
-        auto channels = net_message[CHANNELS].toArray();
-        for (const auto& channel_env : channels)
-            this->m_db->insertChannelEnv(channel_env.toObject());
+            this->m_db->tryToInsertPrivateEnvs(private_env);
     }
 }
 
 // private
-void DataHandler::sendReqForChatEnvMessages(const int &env_id)
+void DataHandler::sendReqForPrivateEnvDetails(const int &env_id)
 {
     using namespace KeyWords;
     QJsonObject req;
-    req[NET_MESSAGE_TYPE] = GET_ENV_MESSAGES;
+    req[NET_MESSAGE_TYPE] = GET_PRIVATE_ENV_DETAILS;
     req [ENV_ID] = env_id;
     this->m_net_handler->m_sender->sendMessage(req);
 }
