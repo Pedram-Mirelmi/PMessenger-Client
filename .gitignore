@@ -36,4 +36,4 @@
 *.autosave
 *.sqlite
 /Client/data/
-*test.cpp
+*test*
