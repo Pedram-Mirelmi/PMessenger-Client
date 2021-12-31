@@ -21,10 +21,15 @@ class NetworkHandler : public QObject
     NetMessageReceiver* m_receiver;
 public:
     NetMessageSender* m_sender;
-
+    Q_PROPERTY(bool net_connected READ netConnected NOTIFY netConnectedChanged);
+signals:
+    void netConnectedChanged(bool connection_status);
+public:
     explicit NetworkHandler(QObject* parent, const QString& address = "127.0.0.1", quint16 port = 54000);
 
     void setAutoConnect(bool enable);
+
+    bool netConnected ();
 
     Q_INVOKABLE void sendRegisterReq(const QString& username, const QString& password);
     Q_INVOKABLE void sendLoginReq(const QString& username, const QString& password);
@@ -34,7 +39,8 @@ public:
 public slots:
     void connectToServer();
     void handleNewNetMessage(const QJsonObject& net_msg);
-
+private:
+    bool net_connected = false;
 signals:
     void newDataArrived(const QJsonObject& msg);
     void entryNetMessageArrived(const QJsonObject& msg);

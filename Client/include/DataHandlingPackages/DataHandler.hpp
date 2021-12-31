@@ -42,7 +42,7 @@ private:
 
     void sendReqForPrivateEnvDetails(const int& env_id);
 
-    void startDB();
+    void prepareDB();
 
 signals:
     void newMessageReceived(const QJsonObject& message_info);

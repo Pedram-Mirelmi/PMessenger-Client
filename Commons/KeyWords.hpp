@@ -23,6 +23,7 @@ constexpr auto PASSWORD = "password";
 constexpr auto NAME = "name";
 constexpr auto USER_ID = "user_id";
 constexpr auto CONTACT_ID = "contact_id";
+constexpr auto NAME_SAVED = "name_saved";
 constexpr auto CREATED_AT = "created_at";
 constexpr auto MESSAGE_TEXT = "message_text";
 constexpr auto SEEN = "seen";
@@ -37,9 +38,8 @@ constexpr auto PHOTO_ID = "photo_id";
 */
 constexpr auto NET_MESSAGE_TYPE = "net_message_type"; // in all requests and responses and basically every network message
 
-// constexpr auto OUTCOME = "outcome"; // in all responses. represents that the proccess of request was successful or not
 
-constexpr auto SUCCESFUL = "succesful"; // in all responses. represents that the response has the information wanted by client or not
+constexpr auto SUCCESSFUL = "successful"; // in all responses. represents that the response has the information wanted by client or not
 
 constexpr auto DETAILS = "details";     // details of process in case of failiar
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -48,11 +48,11 @@ constexpr auto DETAILS = "details";     // details of process in case of failiar
 
 REGISTERING:
     request:    {NET_MESSAGE_TYPE: REGISTER, USERNAME: ..., PASSWORD: ...}
-    response:   {NET_MESSAGE_TYPE: REGISTER_RESULT, OUTCOME: TRUE ? FALSE, DETAILS: ?,  USER_INFO: {...} }
+    response:   {NET_MESSAGE_TYPE: REGISTER_RESULT, SUCCESFUL: TRUE ? FALSE,  USER_INFO: {...} }
 
 LOGINING:
     request:    {NET_MESSAGE_TYPE: LOGIN, USERNAME: ..., PASSWORD: ... }
-    response:   {NET_MESSAGE_TYPE: LOGIN_RESULT, OUTCOME: TRUE ? FALSE, DETAILS: ?, USER_INFO: {...}}
+    response:   {NET_MESSAGE_TYPE: LOGIN_RESULT, SUCCESFUL: TRUE ? FALSE, USER_INFO: {...}}
 */
 constexpr auto LOGIN = "login";
 constexpr auto REGISTER = "register";

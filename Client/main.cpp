@@ -12,11 +12,11 @@ int main(int argc, char *argv[])
 #endif
 
     QGuiApplication app(argc, argv);
-
-    MainApp backend_app;
-
-
     QQmlApplicationEngine engine;
+
+    MainApp backend_app(engine);
+
+
     engine.rootContext()->setContextProperty("mainApp", &backend_app);
     engine.rootContext()->setContextProperty("netConn", backend_app.m_network_handler);
     engine.rootContext()->setContextProperty("dataHolder", backend_app.m_data_handler);

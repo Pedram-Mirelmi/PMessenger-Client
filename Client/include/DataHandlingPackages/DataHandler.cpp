@@ -29,10 +29,10 @@ void DataHandler::feedNewMessagesToModel(const int &env_id)
 }
 
 //public
-void DataHandler::startDB()
+void DataHandler::prepareDB()
 {
-    if (this->m_db->tryToInit()) // if inited
-        this->m_net_handler->sendFetchReq();
+    this->m_db->tryToInit();
+    this->m_net_handler->sendFetchReq();
 }
 
 void DataHandler::convertToHash(InfoContainer &target, const QJsonObject &source)
@@ -45,7 +45,7 @@ void DataHandler::convertToHash(InfoContainer &target, const QJsonObject &source
 void DataHandler::handleNewData(const QJsonObject &net_message)
 {
     using namespace KeyWords;
-    auto data_type = net_message[DATA_TYPE];
+    const auto &data_type = net_message[DATA_TYPE];
     if (data_type == FETCH_RESULT)
     {
         this->handleFetchResult(net_message);

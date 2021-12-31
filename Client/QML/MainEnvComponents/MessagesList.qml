@@ -38,24 +38,8 @@ Rectangle
             spacing: 5
             Layout.fillWidth: true
             Layout.fillHeight: true
-            model: ListModel
-            {
-                id: chatModel
-                ListElement
-                {
-                    sender_id: 1
-                    time: "asdfasd"
-                    message_text: "Hello love!"
+            model: messages_model
 
-                }
-                ListElement
-                {
-                    sender_id: 2
-                    time: "like... NOW!"
-                    message_text: "Hello love!"
-
-                }
-            }
 
             delegate: Component
             {

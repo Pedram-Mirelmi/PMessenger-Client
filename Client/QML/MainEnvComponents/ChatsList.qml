@@ -64,72 +64,8 @@ Rectangle
         width: parent.width
         clip: true
         anchors.bottom: parent.bottom
-        model: ListModel
-        {
-            id: contactsModel
-            ListElement
-            {
-                contact_name: "Mina"
-                last_message: "This is a text"
-            }
+        model: chats_model
 
-            ListElement
-            {
-                contact_name: "Mammad!"
-                last_message: "This is a text"
-            }
-            ListElement
-            {
-                contact_name: "Mina"
-                last_message: "This is a text"
-            }
-            ListElement
-            {
-                contact_name: "Mina"
-                last_message: "This is a text"
-            }
-            ListElement
-            {
-                contact_name: "Mina"
-                last_message: "This is a text"
-            }
-            ListElement
-            {
-                contact_name: "Mina"
-                last_message: "This is a text"
-            }
-            ListElement
-            {
-                contact_name: "Mina"
-                last_message: "This is a text"
-            }
-            ListElement
-            {
-                contact_name: "Mina"
-                last_message: "This is a text"
-            }
-            ListElement
-            {
-                contact_name: "Mina"
-                last_message: "This is a text"
-            }
-            ListElement
-            {
-                contact_name: "Mina"
-                last_message: "This is a text"
-            }
-            ListElement
-            {
-                contact_name: "Mina"
-                last_message: "This is a text"
-            }
-            ListElement
-            {
-                contact_name: "Mina"
-                last_message: "This is a text"
-            }
-
-        }
 
         delegate: Component
         {

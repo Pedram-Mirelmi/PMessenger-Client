@@ -19,7 +19,10 @@ public:
 private:
     QJsonObject m_user_info;
 public:
-    explicit MainApp (QObject* parent = nullptr, const QString& address = "127.0.0.1", const quint16 port = 54000);;
+    explicit MainApp (QQmlApplicationEngine& qml_engine,
+                      QObject* parent = nullptr,
+                      const QString& address = "127.0.0.1",
+                      const quint16 port = 54000);;
 
 
 private slots:

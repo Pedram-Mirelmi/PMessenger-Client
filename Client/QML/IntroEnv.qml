@@ -61,8 +61,23 @@ Item
                 onClicked:
                 {
                     netConn.sendRegisterReq(usernameField.text, passwordField.text);
+//                    console.log(net.net_connected)
                 }
             }
+        }
+    }
+    Item {
+        id: connectionStatus
+        width: 40
+        height: width
+        Image {
+            id: icon
+            anchors.fill: parent
+            source: net.net_connected ? "qrc:/images/connected.png" : "qrc:/images/disconnected.png"
+        }
+        Component.onCompleted:
+        {
+            console.log(net.net_connected)
         }
     }
 }

@@ -47,10 +47,7 @@ public:
             bytes_recv += recv(sock, &buff[bytes_recv], request_length - bytes_recv, 0);
         
         buff[request_length] = 0;
-        std::cout << buff << std::endl;
-        request.clear();
         this->m_Jparser.parse(buff, request);
-        std::cout << buff << std::endl;
         delete[] buff;
     }
 

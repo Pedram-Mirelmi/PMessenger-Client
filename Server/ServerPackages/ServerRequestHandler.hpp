@@ -29,6 +29,7 @@ public:
         {
             this->handleRegister(request, response);
             response[NET_MESSAGE_TYPE] = REGISTER_RESULT;
+            std::cout << request << std::endl;
             return;
         }
         if (net_msg_type == LOGIN)
@@ -83,29 +84,36 @@ public:
     void handleRegister(JsonObj& request, JsonObj& response)
     {
         using namespace KeyWords;
+        std::cout << request << std::endl;
         auto created_user_id = this->db.insertNewUser(request[USERNAME].asCString(), request[PASSWORD].asCString());
+        std::cout << request << std::endl;
         if (created_user_id)
         {
             auto Qry = fmt::format("SELECT * FROM users WHERE user_id = {};", created_user_id);
+            std::cout << request << std::endl;
+
             this->db.singleSELECT(Qry, response[USER_INFO]);
-            response[SUCCESFUL] = true;
+            response[SUCCESSFUL] = true;
+            std::cout << request << std::endl;
+
             return;
         }
-        response[SUCCESFUL] = false;
+        response[SUCCESSFUL] = false;
     }
 
     void handleLogin(JsonObj& request, JsonObj& response)
     {
+        std::cout << request << std::endl;
         using namespace KeyWords;
-        auto Qry = fmt::format("SELECT * FROM {} WHERE {} = '{}';", USERS, USERNAME, request[USERNAME].asString());
-        this->db.SELECT(Qry, response);
-        if (response[PASSWORD] == request[PASSWORD])
+        auto Qry = fmt::format("SELECT * FROM users WHERE username = '{}';", request[USERNAME].asCString());
+        this->db.singleSELECT(Qry, response[USER_INFO]);
+        if (response[USER_INFO][PASSWORD].asString() == request[PASSWORD].asString())
         {
-            response[SUCCESFUL] = true;
+            response[SUCCESSFUL] = true;
             return;
         }
         response.clear();
-        response[SUCCESFUL] = false;        
+        response[SUCCESSFUL] = false;        
         return;
     }
 
@@ -140,7 +148,7 @@ public:
         Json::Value search_result;
         this->db.SELECT(Qry, search_result);
         response[RESULT] = search_result;
-        response[SUCCESFUL] = true;
+        response[SUCCESSFUL] = true;
     }
 
     void handleCreateNewPrivateChat(JsonObj& request, JsonObj& response)
@@ -152,10 +160,10 @@ public:
             auto get_info_query = fmt::format("SELECT * FROM private_chats_view WHERE env_id = {}", created_env_id);
             this->db.singleSELECT(get_info_query, response[ENV_INFO]);
             response[ENV_INFO][ENV_TYPE] = PRIVATE_CHAT;
-            response[SUCCESFUL] = true;
+            response[SUCCESSFUL] = true;
             return;
         }
-        response[SUCCESFUL] = false;
+        response[SUCCESSFUL] = false;
     }
 
     void handleNewMessage(JsonObj& request, JsonObj& response)
@@ -174,22 +182,23 @@ public:
         {
             auto get_info_query = fmt::format("SELECT * FROM text_messages_view WHERE message_id = {};", created_message_id);
             this->db.singleSELECT(get_info_query, response[MESSAGE_INFO]);
-            response[SUCCESFUL] = true;
+            response[SUCCESSFUL] = true;
             return;
         }
-        response[SUCCESFUL] = false;
+        response[SUCCESSFUL] = false;
     }
 
     void addContact(JsonObj& request, JsonObj& response)
     {
         using namespace KeyWords;
         bool successful;
-        auto query = fmt::format("INSERT INTO {}({}, {}) VALUES ('{}', '{}');",
-                            CONTACTS, USER_ID, CONTACT_ID, request[USER_ID].asString(),
-                            request[CONTACT_ID].asString());
+        auto query = fmt::format("INSERT INTO contacts(user_id, contact_id, name_saved) "
+                            "VALUES ({}, {}, '{}');",
+                            request[USER_ID].asString(),
+                            request[CONTACT_ID].asString(),
+                            request[NAME_SAVED].asString());
         
-        response[DETAILS] = this->db.executeQry(query, successful); 
-        response[SUCCESFUL] = successful;
+        response[successful] = this->db.execTransactionQuery(query); 
         return;
     }   
 

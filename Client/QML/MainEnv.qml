@@ -3,31 +3,29 @@ import QtQuick.Controls 2.14
 import QtQuick.Window 2.14
 import QtQuick.Layouts 2.14
 
-import "./MainEnvComponents/"
-import "./Dialogs/"
+import "MainEnvComponents/"
+//import "MainEnvComponents/MessagesList.qml"
+import "Dialogs/"
 
 Item
 {
     id: root
     anchors.fill: parent
     property int user_id: -1
-//    Connections
-//    {
-//        target:
-//    }
 
     SplitView
     {
         anchors.fill: parent
-        ContactsComponent
+
+        ChatsList
         {
+            id: chatsList
             onOpenNewChatdialog: newChatDialog.open()
-            id: contactsComp
         }
 
-        ChatEnv
+        MessagesList
         {
-            id: chatComp
+            id: messagesList
         }
 
     }

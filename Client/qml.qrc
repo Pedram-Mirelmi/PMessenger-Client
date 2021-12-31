@@ -4,10 +4,12 @@
         <file>QML/IntroEnv.qml</file>
         <file>QML/main.qml</file>
         <file>QML/MainEnv.qml</file>
-        <file>QML/MainEnvComponents/ContactsComponent.qml</file>
-        <file>QML/MainEnvComponents/ChatEnv.qml</file>
+        <file>QML/MainEnvComponents/ChatsList.qml</file>
+        <file>QML/MainEnvComponents/MessagesList.qml</file>
         <file>QML/Dialogs/NewChatDialog.qml</file>
         <file>images/AppBackground.jpg</file>
+        <file>images/disconnected.png</file>
+        <file>images/connected.png</file>
     </qresource>
     <qresource prefix="/QML/MainEnvComponenct"/>
 </RCC>

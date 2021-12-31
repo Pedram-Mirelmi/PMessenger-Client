@@ -14,15 +14,19 @@ ApplicationWindow
         target: netConn
         function onEntryNetMessageArrived(net_msg)
         {
-            console.log("hereeeee", net_msg)
-            mainEnv.visible = true
-            introEnv.destroy()
+            if (net_msg["successful"])
+            {
+                console.log("hereeeee", net_msg)
+                mainEnv.visible = true
+                introEnv.destroy()
+            }
         }
     }
 
     Image
     {
         id: mainBackGround
+
         anchors.fill: parent
         source: "qrc:/images/AppBackground.jpg"
     }

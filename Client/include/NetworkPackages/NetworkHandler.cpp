@@ -12,6 +12,12 @@ NetworkHandler::NetworkHandler(QObject *parent, const QString &address, quint16 
     connect(this->m_socket, &QTcpSocket::disconnected, this->m_receiver, &NetMessageReceiver::stopListening);
     connect(this->m_socket, &QTcpSocket::connected, this->m_receiver, &NetMessageReceiver::startListening, Qt::UniqueConnection);
     connect(this->m_receiver, &NetMessageReceiver::newNetMessageArrived, this, &NetworkHandler::handleNewNetMessage);
+    connect(this->m_socket, &QTcpSocket::connected, [=](){qDebug() << "connectedddd";
+                                                          this->net_connected=true;
+                                                          this->netConnectedChanged(true);});
+    connect(this->m_socket, &QTcpSocket::disconnected, [=](){qDebug() << "disconnectedddd";
+                                                             this->net_connected=false;
+                                                             this->netConnectedChanged(false);});
     this->connectToServer();
     this->setAutoConnect(true);
 }
@@ -23,6 +29,12 @@ void NetworkHandler::setAutoConnect(bool enable)
         connect(this->m_socket, &QTcpSocket::disconnected, this, &NetworkHandler::connectToServer, Qt::UniqueConnection);
     else
         disconnect(this->m_socket, &QTcpSocket::disconnected, this, &NetworkHandler::connectToServer);
+}
+
+bool NetworkHandler::netConnected()
+{
+
+    return this->net_connected;
 }
 
 

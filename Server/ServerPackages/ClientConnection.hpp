@@ -14,15 +14,14 @@
 
 class ClientConnection
 {
-typedef Json::Value msg_t;
 typedef std::unordered_map<id_T, std::shared_ptr<ClientConnection>> conn_set;
 private:
 	// sockaddr_in hint; 
     NetworkHandler networkHandler;
     id_T user_id = INVALID_ID;
     conn_set& other_connections;
-    Json::Value current_request;
-    Json::Value current_response;
+    JsonObj current_request;
+    JsonObj current_response;
     std::chrono::steady_clock::time_point last_req_time;
     ServerRequestHandler rh;
 public:
@@ -39,16 +38,19 @@ public:
         {   
             while (true)
             {
+                current_response.clear();
+                current_request.clear();
                 this->networkHandler.receiveMessage(current_request);
                 if (current_request[NET_MESSAGE_TYPE] == CLOSE_CONNECTION)
                 {
                     std::cout << "connection closed properly by client" << std::endl;
                     return INVALID_ID;
                 }
+                std::cout << (current_request[NET_MESSAGE_TYPE].asString() == REGISTER) << std::endl;
                 this->rh.handle(current_request, current_response);
-                if ((current_request[NET_MESSAGE_TYPE] == REGISTER
-                     || current_request[NET_MESSAGE_TYPE] == LOGIN) 
-                     && current_response[SUCCESFUL] == TRUEE)
+                if ((current_request[NET_MESSAGE_TYPE].asString() == REGISTER
+                     || current_request[NET_MESSAGE_TYPE].asString() == LOGIN) 
+                     && current_response[SUCCESSFUL].asBool())
                 {
                     std::cout << current_response << std::endl;
                     this->user_id = std::stoi(current_response[USER_INFO][USER_ID].asString());
@@ -77,8 +79,10 @@ public:
         {
             while (true)
             {
+                current_response.clear();
+                current_request.clear();
                 this->networkHandler.receiveMessage(current_request);
-                if (current_request[NET_MESSAGE_TYPE] == CLOSE_CONNECTION)
+                if (current_request[NET_MESSAGE_TYPE].asCString() == CLOSE_CONNECTION)
                 {
                     std::cout << "connection closed properly by client" << std::endl;
                     return;
@@ -112,7 +116,7 @@ private:
     {
         using namespace KeyWords;
         if (request[NET_MESSAGE_TYPE] == SEND_NEW_MESSAGE
-            && response[SUCCESFUL] == TRUEE)
+            && response[SUCCESSFUL].asBool() == true)
         {
             this->announceNewMessageToOthers(response[MESSAGE_INFO]);
         }
