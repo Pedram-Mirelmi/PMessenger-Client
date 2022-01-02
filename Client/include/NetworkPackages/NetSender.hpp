@@ -15,5 +15,5 @@ private:
 public:
 
     explicit NetMessageSender(QObject* parent, QTcpSocket* socket);
-    void sendMessage(const QJsonObject& message);
+    void sendNetMessage(const QJsonObject& message);
 };

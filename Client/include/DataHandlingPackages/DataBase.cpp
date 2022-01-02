@@ -80,24 +80,17 @@ bool DataBase::tryToInit()
     if(!dir.exists(data_path))
     {
         if (dir.mkpath(data_path))
-            qCritical() << "Couldn't create folder." << data_path;
-        if (!this->tryToCreateDBFile())
-            qCritical() << "Couldn't create database files";
-        if (!this->db.open())
-            qCritical() << "Couldn't open database";
-        if (!this->createTables())
-            qCritical() << "Couldn't create tables";
-        return true;
-    }
-    QFile file;
-    if (!file.exists(QString(data_path) + database_filename))
-    {
-        if (!this->tryToCreateDBFile())
-            qCritical() << "Couldn't create database files";
-        if (!this->db.open())
-            qCritical() << "Couldn't open database";
-        if (!this->createTables())
-            qCritical() << "Couldn't create tables";
+            qCritical() << "Couldn't create folder." << data_path;        
+        QFile file;
+        if (!file.exists(QString(data_path) + database_filename))
+        {
+            if (!this->tryToCreateDBFile())
+                qCritical() << "Couldn't create database files";
+            if (!this->db.open())
+                qCritical() << "Couldn't open database";
+            if (!this->createTables())
+                qCritical() << "Couldn't create tables";
+        }
         return true;
     }
     return false;
@@ -106,9 +99,11 @@ bool DataBase::tryToInit()
 bool DataBase::tryToCreateDBFile()
 {
     QFile db_file(database_filename);
-    bool ok = db_file.open(QFile::ReadWrite);
+    if (!db_file.open(QFile::ReadWrite))
+        return false;
+
     this->db.setDatabaseName(QString(data_path) + database_filename);
-    return ok;
+    return true;
 }
 
 bool DataBase::createTables()
@@ -249,7 +244,7 @@ QJsonArray DataBase::convertToNormalForm(const QJsonArray &data)
 
 bool DataBase::envExists(const quint64 &env_id) const
 {
-    QVector<QHash<const char*, QVariant>> arr;
+    QVector<InfoContainer> arr;
     this->SELECT(arr, fmt::format("SELECT * FROM chat_envs WHERE env_id={}", (uint64_t)env_id).c_str());
     return arr.isEmpty();
 }

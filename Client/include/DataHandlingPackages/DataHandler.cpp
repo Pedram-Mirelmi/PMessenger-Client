@@ -1,6 +1,23 @@
 #include "DataHandler.hpp"
 #include <QMutex>
+#include <QDataStream>
+#include <QHash>
+#include <QFile>
 #include "../ClientKeywords.hpp"
+
+static const auto pending_messages_file_path = "/home/pedram/Desktop/PMessenger/Client/data/pending_messages";
+QMutex pending_messages_lock;
+
+static const auto pending_chats_file_path = "/home/pedram/Desktop/PMessenger/Client/data/pending_chats";
+QMutex pending_chats_lock;
+
+static const auto invalid_ids_file_path = "/home/pedram/Desktop/PMessenger/Client/data/invalid_ids";
+QMutex invalid_ids_lock;
+
+QHash<quint64, InfoContainer> pending_messages,
+                              pending_chats;
+
+InfoContainer invalid_ids;
 
 DataHandler::DataHandler(QObject *parent, NetworkHandler *netHandler)
     :QObject(parent),
@@ -28,17 +45,16 @@ void DataHandler::feedNewMessagesToModel(const int &env_id)
     this->m_message_list_model->endResetModel();
 }
 
-//public
-void DataHandler::prepareDB()
+void DataHandler::startNewPrivateChat(const quint64 &user_id)
 {
-    this->m_db->tryToInit();
-    this->m_net_handler->sendFetchReq();
+    this->addPrivateChatToPendingChats(user_id);
+    this->m_net_handler->sendCreateNewPrivateChatReq(user_id);
 }
 
-void DataHandler::convertToHash(InfoContainer &target, const QJsonObject &source)
+void DataHandler::sendNewTextMessage(const quint64 &env_id, const QString &message_text)
 {
-    for (const auto& key : source.keys())
-        target[key.toStdString().c_str()] = source[key].toVariant();
+    this->addNewTextMessageToPendingMessages(env_id, message_text);
+    this->m_net_handler->sendNewTextMessageReq(env_id, message_text);
 }
 
 // public slot
@@ -76,16 +92,143 @@ void DataHandler::handleFetchResult(const QJsonObject &net_message)
 }
 
 // private
-void DataHandler::sendReqForPrivateEnvDetails(const int &env_id)
+void DataHandler::sendReqForPrivateEnvDetails(const quint64 &env_id)
 {
     using namespace KeyWords;
     QJsonObject req;
     req[NET_MESSAGE_TYPE] = GET_PRIVATE_ENV_DETAILS;
-    req [ENV_ID] = env_id;
-    this->m_net_handler->m_sender->sendMessage(req);
+    req [ENV_ID] = (quint16)env_id;
+    this->m_net_handler->m_sender->sendNetMessage(req);
+}
+
+//private
+void DataHandler::prepareDB()
+{
+    this->m_db->tryToInit();
+    this->m_net_handler->sendFetchReq();
+    this->tryToCreatePendingFiles();
+    this->readPendingsFromFile();
+}
+
+bool DataHandler::tryToCreatePendingFiles()
+{
+    QFile file;
+    bool inited = false;
+    if (file.exists(pending_messages_file_path))
+    {
+        QFile pending_messages_file(pending_messages_file_path);
+        pending_messages_file.open(QFile::ReadWrite);
+        pending_messages_file.close();
+        serializeToFile(pending_messages, pending_messages_file_path);
+        inited = true;
+    }
+    if (file.exists(pending_chats_file_path))
+    {
+        QFile pending_chats_file (pending_chats_file_path);
+        pending_chats_file.open(QFile::ReadWrite);
+        pending_chats_file.close();
+        serializeToFile(pending_chats, pending_chats_file_path);
+        inited = true;
+    }
+    if (!file.exists(invalid_ids_file_path))
+    {
+        using namespace KeyWords;
+        QFile invalid_ids_file(invalid_ids_file_path);
+        invalid_ids_file.open(QFile::ReadWrite);
+        invalid_ids_file.close();
+        invalid_ids[LAST_INVALID_CHAT_ID] = invalid_ids[LAST_INVALID_MESSAGE_ID] = 0;
+        serializeToFile(invalid_ids, invalid_ids_file_path);
+        inited = true;
+    }
+    return inited;
+
+}
+
+// private
+void DataHandler::readPendingsFromFile() // thread safe
+{
+    pending_messages_lock.lock();
+    this->deserializeFromFile(pending_messages, pending_messages_file_path);
+    pending_messages_lock.unlock();
+
+    pending_chats_lock.lock();
+    this->deserializeFromFile(pending_chats, pending_chats_file_path);
+    pending_chats_lock.unlock();
+
+    invalid_ids_lock.lock();
+    this->deserializeFromFile(invalid_ids, invalid_ids_file_path);
+    invalid_ids_lock.unlock();
+}
+
+//private
+void DataHandler::addPrivateChatToPendingChats(const quint64 &user_id)
+{
+    pending_chats_lock.lock();
+
+    using namespace KeyWords;
+    InfoContainer chat_info;
+    chat_info[FIRST_PERSON] = this->this_user_id;
+    chat_info[SECOND_PERSON] = user_id;
+    chat_info[ENV_ID] = invalid_ids[LAST_INVALID_CHAT_ID] = invalid_ids[LAST_INVALID_CHAT_ID].toUInt() + 1;
+
+    pending_chats_lock.unlock();
+}
+
+void DataHandler::addNewTextMessageToPendingMessages(const quint64 &env_id, const QString &message_text)
+{
+    pending_messages_lock.lock();
+
+    using namespace KeyWords;
+    InfoContainer message_info;
+    message_info[MESSAGE_TEXT] = message_text;
+    message_info[OWNER_ID] = this->this_user_id;
+    message_info[ENV_ID] = env_id;
+    message_info[MESSAGE_ID] = invalid_ids[LAST_INVALID_MESSAGE_ID] = invalid_ids[LAST_INVALID_MESSAGE_ID].toUInt() + 1;
+
+    pending_messages_lock.unlock();
 }
 
 
-// private
+template<typename Loader_T>
+bool DataHandler::deserializeFromFile(Loader_T &data_to_deserialize, const char *file_path)
+{
+    QFile file(file_path);
+    if (!file.open(QFile::ReadOnly))
+    {
+        qCritical() << "couldn't open file " << file_path;
+        return false;
+    }
+    QDataStream stream(&file);
+    if (stream.version() != QDataStream::Qt_6_2)
+        qCritical() << "INVALID Qt version!";
+
+    stream >> data_to_deserialize;
+    file.close();
+    return true;
+}
+
+template<typename Loader_T>
+bool DataHandler::serializeToFile(Loader_T &data_to_serialize, const char *file_path)
+{
+    QFile file(file_path);
+    if (!file.open(QFile::WriteOnly))
+    {
+        qCritical() << "couldn't open file " << file_path;
+        return false;
+    }
+    QDataStream stream(&file);
+    stream.setVersion(QDataStream::Qt_6_2);
+
+    stream << data_to_serialize;
+    file.close();
+    return true;
+}
 
 // private
+void DataHandler::convertToHash(InfoContainer &target, const QJsonObject &source)
+{
+    for (const auto& key : source.keys())
+        target[key.toStdString().c_str()] = source[key].toVariant();
+}
+
+

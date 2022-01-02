@@ -2,4 +2,4 @@
 #include <QHash>
 #include <QVariant>
 
-typedef QHash<const char*, QVariant> InfoContainer;
+typedef QHash<QString, QVariant> InfoContainer;

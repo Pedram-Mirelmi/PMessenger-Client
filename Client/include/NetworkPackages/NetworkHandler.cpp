@@ -9,26 +9,40 @@ NetworkHandler::NetworkHandler(QObject *parent, const QString &address, quint16 
       m_receiver(new NetMessageReceiver(this, this->m_socket)),
       m_sender(new NetMessageSender(this, this->m_socket))
 {
-    connect(this->m_socket, &QTcpSocket::disconnected, this->m_receiver, &NetMessageReceiver::stopListening);
-    connect(this->m_socket, &QTcpSocket::connected, this->m_receiver, &NetMessageReceiver::startListening, Qt::UniqueConnection);
-    connect(this->m_receiver, &NetMessageReceiver::newNetMessageArrived, this, &NetworkHandler::handleNewNetMessage);
-    connect(this->m_socket, &QTcpSocket::connected, [=](){qDebug() << "connectedddd";
-                                                          this->net_connected=true;
-                                                          this->netConnectedChanged(true);});
-    connect(this->m_socket, &QTcpSocket::disconnected, [=](){qDebug() << "disconnectedddd";
-                                                             this->net_connected=false;
-                                                             this->netConnectedChanged(false);});
-    this->connectToServer();
+    connect(this->m_socket, &QTcpSocket::disconnected,
+            this->m_receiver, &NetMessageReceiver::stopListening);
+
+    connect(this->m_socket, &QTcpSocket::connected,
+            this->m_receiver, &NetMessageReceiver::startListening, Qt::UniqueConnection);
+
+    connect(this->m_receiver, &NetMessageReceiver::newNetMessageArrived,
+            this, &NetworkHandler::handleNewNetMessage);
+
+    connect(this->m_socket, &QTcpSocket::connected, [=]()
+                {
+                      this->net_connected=true;
+                      emit this->netConnectedChanged(true);
+                }
+    );
+    connect(this->m_socket, &QTcpSocket::disconnected, [=]()
+                {
+                     this->net_connected=false;
+                     emit this->netConnectedChanged(false);
+                }
+    );
     this->setAutoConnect(true);
+    this->connectToServer();
 }
 
 // public:
 void NetworkHandler::setAutoConnect(bool enable)
 {
     if(enable)
-        connect(this->m_socket, &QTcpSocket::disconnected, this, &NetworkHandler::connectToServer, Qt::UniqueConnection);
+        connect(this->m_socket, &QTcpSocket::disconnected,
+                this, &NetworkHandler::connectToServer, Qt::UniqueConnection);
     else
-        disconnect(this->m_socket, &QTcpSocket::disconnected, this, &NetworkHandler::connectToServer);
+        disconnect(this->m_socket, &QTcpSocket::disconnected,
+                   this, &NetworkHandler::connectToServer);
 }
 
 bool NetworkHandler::netConnected()
@@ -46,7 +60,7 @@ void NetworkHandler::sendRegisterReq(const QString &username, const QString &pas
     request[NET_MESSAGE_TYPE] = REGISTER;
     request[USERNAME] = username;
     request[PASSWORD] = password;
-    this->m_sender->sendMessage(request);
+    this->m_sender->sendNetMessage(request);
     emit this->testSignal("Hiiiiii the fuuuckkkkkkkkkkkk");
 }
 
@@ -58,7 +72,16 @@ void NetworkHandler::sendLoginReq(const QString &username, const QString &passwo
     request[NET_MESSAGE_TYPE] = LOGIN;
     request[USERNAME] = username;
     request[PASSWORD] = password;
-    this->m_sender->sendMessage(request);
+    this->m_sender->sendNetMessage(request);
+}
+
+void NetworkHandler::sendUsernameSearchReq(const QString &username)
+{
+    using namespace KeyWords;
+    QJsonObject net_msg;
+    net_msg[NET_MESSAGE_TYPE] = SEARCH_USERNAME;
+    net_msg[USERNAME_TO_SEARCH] = username;
+    this->m_sender->sendNetMessage(net_msg);
 }
 
 // Q_INVOKSBLE
@@ -67,7 +90,39 @@ void NetworkHandler::sendFetchReq()
     using namespace KeyWords;
     QJsonObject req;
     req[NET_MESSAGE_TYPE] = FETCH;
-    this->m_sender->sendMessage(req);
+    this->m_sender->sendNetMessage(req);
+}
+
+void NetworkHandler::sendCreateNewPrivateChatReq(const quint64 &user_chat_with,
+                                                 const quint64& invalid_env_id)
+{
+    using namespace KeyWords;
+    QJsonObject req;
+    req[NET_MESSAGE_TYPE] = CREATE_NEW_PRIVATE_CHAT;
+    req[USER_ID] = (quint16)user_chat_with;
+    req[INVALID_ENV_ID] = (quint16)invalid_env_id;
+    this->m_sender->sendNetMessage(req);
+}
+
+void NetworkHandler::sendNewTextMessageReq(const quint64& env_id,
+                                           const QString& message_text,
+                                           const quint64& invalid_message_id)
+{
+    using namespace KeyWords;
+    QJsonObject req;
+    req[NET_MESSAGE_TYPE] = NEW_TEXT_MESSAGE;
+    req[MESSAGE_TEXT] = message_text;
+    req[INVALID_MESSAGE_ID] = (quint16)invalid_message_id;
+    req[ENV_ID] = (quint16)env_id;
+    this->m_sender->sendNetMessage(req);
+}
+
+void NetworkHandler::sendReqForPrivateEnvDetails(const quint64& env_id)
+{
+    using namespace KeyWords;
+    QJsonObject req;
+    req[NET_MESSAGE_TYPE] = GET_PRIVATE_ENV_DETAILS;
+    req [ENV_ID] = (quint16)env_id;
 }
 
 
@@ -76,6 +131,7 @@ void NetworkHandler::connectToServer()
 {
     this->m_socket->connectToHost(m_address, m_port);
 }
+
 
 
 // public slot
@@ -87,9 +143,9 @@ void NetworkHandler::handleNewNetMessage(const QJsonObject &net_msg)
         emit this->entryNetMessageArrived(net_msg);
         return;
     }
-    if (net_msg[NET_MESSAGE_TYPE] == USER_SEARCH_RESULT)
+    if (net_msg[NET_MESSAGE_TYPE] == SEARCH_USERNAME_RESULT)
     {
-        emit this->userSearchResultArrived(net_msg);
+        emit this->searchUsernameResultArrived(net_msg);
         return;
     }
     else if (net_msg[NET_MESSAGE_TYPE] == CHAT_CREATION_CONFIRMATION)
@@ -102,11 +158,7 @@ void NetworkHandler::handleNewNetMessage(const QJsonObject &net_msg)
         emit this->newDataArrived(net_msg);
         return;
     }
-    if (net_msg[NET_MESSAGE_TYPE] == USER_SEARCH_RESULT)
-    {
-        emit this->userSearchResultArrived(net_msg);
-        return;
-    }
+
 
 }
 

@@ -25,7 +25,6 @@ constexpr auto USER_ID = "user_id";
 constexpr auto CONTACT_ID = "contact_id";
 constexpr auto NAME_SAVED = "name_saved";
 constexpr auto CREATED_AT = "created_at";
-constexpr auto MESSAGE_TEXT = "message_text";
 constexpr auto SEEN = "seen";
 constexpr auto ENV_ID = "env_id";
 constexpr auto OWNER_ID = "owner_id";
@@ -89,35 +88,37 @@ constexpr auto ENV_INFO = "env_info";
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
-    USER_SEARCH when user search for another user to start a new conversation with
-    request:    {NET_MESSAGE_TYPE: USER_SEARCH, SEARCH_PHRASE: ...}
-    response:   {NET_MESSAGE_TYPE: USER_SEARCH_RESULT, RESULT: [...]}
+    SEARCH_USERNAME when user search for another user to start a new conversation with
+    request:    {NET_MESSAGE_TYPE: SEARCH_USERNAME, USERNAME_TO_SEARCH: ...}
+    response:   {NET_MESSAGE_TYPE: USER_SEARCH_RESULT, SEARCH_RESULT: [...]}
 ]
 */
-constexpr auto USER_SEARCH_RESULT = "user_search_result";
-constexpr auto USER_SEARCH = "user_search";
-constexpr auto SEARCH_PHRASE = "search_phrase";
-constexpr auto RESULT = "result";
+constexpr auto SEARCH_USERNAME = "username_search";
+constexpr auto USERNAME_TO_SEARCH = "username_to_search";
+constexpr auto SEARCH_USERNAME_RESULT = "search_username_result";
+constexpr auto SEARCH_RESULT = "result";
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
-    CREATE_NEW_PRIVATE_CHAT when user wants to start a new conversation with another using their user_id (got by USER_SEARCH earlier)
-    request:    {NET_MESSAGE_TYPE: CREATE_NEW_PRIVATE_CHAT, user_id: ...}
-    response:   {NET_MESSAGE_TYPE: CHAT_CREATION_CONFIRMATION, ENV_INFO: {ENV_TYPE: PRIVATE_CHAT, env_id: ...} }
+    CREATE_NEW_PRIVATE_CHAT when user wants to start a new conversation with another using their user_id (got by SEARCH_USERNAME earlier)
+    request:    {NET_MESSAGE_TYPE: CREATE_NEW_PRIVATE_CHAT, INVALID_ENV_ID: ..., user_id: ...}
+    response:   {NET_MESSAGE_TYPE: DATA, DATA_TYPE: CHAT_CREATION_CONFIRMATION, ENV_INFO: {ENV_TYPE: PRIVATE_CHAT, INVALID_ENV_ID: ..., env_id: ...} }
 
 */
 constexpr auto CREATE_NEW_PRIVATE_CHAT = "create_new_private_chat";
+constexpr auto INVALID_ENV_ID = "invalid_env_id";
 constexpr auto CHAT_CREATION_CONFIRMATION = "chat_creation_confirmation";
 constexpr auto ENV_TYPE = "env_type";
 constexpr auto PRIVATE_CHAT = "private_chat";
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
-    SEND_NEW_MESSAGE when user sends a new message on an "env_id" chat environment
-    request:    {NET_MESSAGE_TYPE: SEND_NEW_MESSAGE, MESSAGE_INFO: {...}}
+    NEW_TEXT_MESSAGE when user sends a new message on an "env_id" chat environment
+    request:    {NET_MESSAGE_TYPE: NEW_TEXT_MESSAGE, MESSAGE_TEXT: ..., INVALID_MESSAGE_ID: ..., env_id: ...}
     response:   {NET_MESSAGE_TYPE: DATA, DATA_TYPE: MESSAGE_SENT_CONFIRMAION, MESSAGE_INFO: {...}}
 */
-constexpr auto SEND_NEW_MESSAGE = "send_new_message";
-constexpr auto MESSAGE_TYPE = "message_type";
+constexpr auto NEW_TEXT_MESSAGE = "new_text_message";
+constexpr auto MESSAGE_TEXT = "message_text";
+constexpr auto INVALID_MESSAGE_ID = "invalid_message_id";
 constexpr auto MESSAGE_INFO = "message_info";
 constexpr auto MESSAGE_SENT_CONFIRMATION = "message_sent_confirmation";
 constexpr auto TEXT_MESSAGE = "text_message";

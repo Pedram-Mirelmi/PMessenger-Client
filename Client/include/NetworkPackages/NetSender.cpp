@@ -6,7 +6,7 @@ NetMessageSender::NetMessageSender(QObject *parent, QTcpSocket *socket)
     : QObject(parent), m_socket(socket)
 {}
 
-void NetMessageSender::sendMessage(const QJsonObject &message)
+void NetMessageSender::sendNetMessage(const QJsonObject &message)
 {
     QByteArray message_string = QJsonDocument(message).toJson(QJsonDocument::Compact);
     QByteArray message_header(

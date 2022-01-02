@@ -33,8 +33,13 @@ public:
 
     Q_INVOKABLE void sendRegisterReq(const QString& username, const QString& password);
     Q_INVOKABLE void sendLoginReq(const QString& username, const QString& password);
-    Q_INVOKABLE void sendFetchReq();
+    Q_INVOKABLE void sendUsernameSearchReq(const QString& username);
 
+    void sendFetchReq();
+
+    void sendCreateNewPrivateChatReq(const quint64& user_chat_with);
+
+    void sendNewTextMessageReq(const quint64& env_id, const QString& message_text);
 
 public slots:
     void connectToServer();
@@ -44,7 +49,7 @@ private:
 signals:
     void newDataArrived(const QJsonObject& msg);
     void entryNetMessageArrived(const QJsonObject& msg);
-    void userSearchResultArrived(const QJsonObject& msg);
+    void searchUsernameResultArrived(const QJsonObject& msg);
     void newChatCreationMsgArrived(const QJsonObject& msg);
     void testSignal(QString s);
 };
