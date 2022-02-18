@@ -1,6 +1,5 @@
 DROP VIEW IF EXISTS text_messages_view;
 DROP VIEW IF EXISTS private_chats_view;
-
 DROP TABLE IF EXISTS text_messages;
 DROP TABLE IF EXISTS messages;
 DROP TABLE IF EXISTS private_chats;
@@ -34,7 +33,7 @@ DROP TABLE IF EXISTS chat_envs;
 CREATE TABLE chat_envs
 (
     env_id          BIGSERIAL NOT NULL PRIMARY KEY ,
-    created_at      DATE NOT NULL DEFAULT NOW()
+    created_at      DATE NOT NULL DEFAULT NOW()           
 );
 
 CREATE TABLE private_chats
@@ -94,7 +93,4 @@ CREATE VIEW private_chats_view AS
     FROM chat_envs ce
     LEFT JOIN private_chats pc
         ON ce.env_id = pc.env_id;
-
-
-select * from users;
 

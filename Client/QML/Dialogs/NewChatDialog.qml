@@ -3,18 +3,31 @@ import QtQuick.Controls 2.14
 import QtQuick.Window 2.14
 import QtQuick.Layouts 1.14
 
-
 Dialog
 {
-    id: customeDialog
     width: 400
     height: 600
-    signal searchedFor(string phrase)
     background: Rectangle
     {
         anchors.fill: parent
         color: "steelblue"
     }
+    Connections
+    {
+        target: netConn
+        function onSearchUsernameResultArrived(search_result)
+        {
+            for (let i = 0; i < search_result.length; i++)
+            {
+                let user_info = search_result[i];
+                resultListModel.append({"user_id": user_info["user_id"],
+                                        "username": user_info["username"],
+                                        "name": user_info["name"]});
+            }
+        }
+    }
+    onClosed: resultListModel.clear()
+
     anchors.centerIn: parent
     Frame
     {
@@ -27,7 +40,6 @@ Dialog
             {
                 text: "Start new chat"
                 Layout.alignment: Qt.AlignCenter
-
                 font.pointSize: 30
             }
 
@@ -55,7 +67,8 @@ Dialog
                 text: "Search"
                 onClicked:
                 {
-                    searchedFor(searchField.text)
+                    resultListModel.clear()
+                    netConn.sendUsernameSearchReq(searchField.text)
                 }
             }
             Frame
@@ -69,16 +82,7 @@ Dialog
                     clip: true
                     model: ListModel
                     {
-                        ListElement
-                        {
-                            username: "Minil"
-                            name: "Mina"
-                        }
-                        ListElement
-                        {
-                            username: "Minillll"
-                            name: "Minaaa"
-                        }
+                        id: resultListModel
                     }
                     delegate: Component
                     {
@@ -114,7 +118,9 @@ Dialog
                                 anchors.fill: parent
                                 onClicked:
                                 {
-                                    console.log("clicked on ", model.username)
+                                    dataHolder.openPrivateChatWith(model.user_id, model.name)
+                                    dataHolder.saveUser(model.user_id, model.username, model.name)
+                                    newChatDialog.close()
                                 }
                             }
                         }

@@ -4,7 +4,6 @@ import QtQuick.Layouts 1.14
 
 Item
 {
-    id: rootId
     anchors.fill: parent
 
     Column
@@ -70,14 +69,11 @@ Item
         id: connectionStatus
         width: 40
         height: width
-        Image {
+        Image
+        {
             id: icon
             anchors.fill: parent
-            source: net.net_connected ? "qrc:/images/connected.png" : "qrc:/images/disconnected.png"
-        }
-        Component.onCompleted:
-        {
-            console.log(net.net_connected)
+            source: netConn.net_connected ? "qrc:/images/connected.png" : "qrc:/images/disconnected.png"
         }
     }
 }

@@ -5,8 +5,8 @@ import "./MainEnvComponents/"
 
 ApplicationWindow
 {
-    width: 640
-    height: 480
+    width: 1080
+    height: 720
     visible: true
     title: qsTr("P-Messenger")
     Connections
@@ -23,10 +23,10 @@ ApplicationWindow
         }
     }
 
+
     Image
     {
         id: mainBackGround
-
         anchors.fill: parent
         source: "qrc:/images/AppBackground.jpg"
     }
@@ -40,6 +40,7 @@ ApplicationWindow
     IntroEnv
     {
         id: introEnv
+//        visible: false
     }
 
 }

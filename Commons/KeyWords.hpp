@@ -93,10 +93,10 @@ constexpr auto ENV_INFO = "env_info";
     response:   {NET_MESSAGE_TYPE: USER_SEARCH_RESULT, SEARCH_RESULT: [...]}
 ]
 */
-constexpr auto SEARCH_USERNAME = "username_search";
+constexpr auto SEARCH_USERNAME = "search_username";
 constexpr auto USERNAME_TO_SEARCH = "username_to_search";
 constexpr auto SEARCH_USERNAME_RESULT = "search_username_result";
-constexpr auto SEARCH_RESULT = "result";
+constexpr auto SEARCH_RESULT = "search_result";
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*

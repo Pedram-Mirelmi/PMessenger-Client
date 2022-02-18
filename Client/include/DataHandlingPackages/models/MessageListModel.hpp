@@ -20,8 +20,8 @@ public:
     {
         message_id = Qt::UserRole,
         owner_id,
-//        created_at,
-        message_type
+        message_type,
+        message_text
     };
 
     // Basic functionality:
@@ -38,16 +38,19 @@ public:
     QHash<int, QByteArray> roleNames() const override;
 
     void insertMessage(const InfoContainer& msg);
+
     void insertMessages(QVector<InfoContainer> &msg_list);
 
 public slots:
     void considerNewTextMessage(const QJsonObject& msg_info);
+
 private:
     QVector<InfoContainer> m_messages;
 
     void clearModel();
 
     void swapItems(const quint64 &first, const quint64 &second);
+
     void sortMessages();
 
     void convertToHash(InfoContainer& target, const QJsonObject& source); // in place

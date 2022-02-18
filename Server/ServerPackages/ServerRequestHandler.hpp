@@ -4,6 +4,7 @@
 #include "DatabaseConnector.hpp"
 #include <unordered_set>
 #include "../../Commons/stringTools.hpp"
+#include <string>
 
 typedef Json::Value JsonObj;
 typedef unsigned long int id_T;
@@ -38,15 +39,15 @@ public:
             response[NET_MESSAGE_TYPE] = LOGIN_RESULT;
             return;
         }
-        if (net_msg_type == USER_SEARCH)
+        if (net_msg_type == SEARCH_USERNAME)
         {
-            this->handleUserSearch(request, response);
-            response[NET_MESSAGE_TYPE] = USER_SEARCH_RESULT;
+            this->handleSearchUsername(request, response);
+            response[NET_MESSAGE_TYPE] = SEARCH_USERNAME_RESULT;
             return;
         }
-        if (net_msg_type == SEND_NEW_MESSAGE)
+        if (net_msg_type == NEW_TEXT_MESSAGE)
         {
-            this->handleNewMessage(request, response);
+            this->handleNewTextMessage(request, response);
             response[NET_MESSAGE_TYPE] = DATA;
             response[DATA_TYPE] = MESSAGE_SENT_CONFIRMATION;
             return;
@@ -54,7 +55,8 @@ public:
         if (net_msg_type == CREATE_NEW_PRIVATE_CHAT)
         {
             this->handleCreateNewPrivateChat(request, response);
-            response[NET_MESSAGE_TYPE] = CHAT_CREATION_CONFIRMATION;
+            response[NET_MESSAGE_TYPE] = DATA;
+            response[DATA_TYPE] = CHAT_CREATION_CONFIRMATION;
             return;
         }
         if (net_msg_type == FETCH)
@@ -85,7 +87,8 @@ public:
     {
         using namespace KeyWords;
         std::cout << request << std::endl;
-        auto created_user_id = this->db.insertNewUser(request[USERNAME].asCString(), request[PASSWORD].asCString());
+        auto created_user_id = this->db.insertNewUser(request[USERNAME].asCString(),
+                                                      request[PASSWORD].asCString());
         std::cout << request << std::endl;
         if (created_user_id)
         {
@@ -105,7 +108,8 @@ public:
     {
         std::cout << request << std::endl;
         using namespace KeyWords;
-        auto Qry = fmt::format("SELECT * FROM users WHERE username = '{}';", request[USERNAME].asCString());
+        auto Qry = fmt::format("SELECT * FROM users WHERE username = '{}';",
+                                             request[USERNAME].asCString());
         this->db.singleSELECT(Qry, response[USER_INFO]);
         if (response[USER_INFO][PASSWORD].asString() == request[PASSWORD].asString())
         {
@@ -120,16 +124,12 @@ public:
     void handleFetch(JsonObj& request, JsonObj& response)
     {
         using namespace KeyWords;
-        auto privates_query = fmt::format("SELECT * from private_chats_view WHERE first_person = {} OR second_person = {};", this->m_user_id, this->m_user_id);
-        // auto groups_query = fmt::format("SELECT * from groups_attendees WHERE user_id = {};", this->m_user_id);
-        // auto channels_query = fmt::format("SELECT * from channel_attendees WHERE user_id = {};", this->m_user_id);
+        auto privates_query = fmt::format("SELECT * from private_chats_view "
+                                          "WHERE first_person = {} OR second_person = {};",
+                                           this->m_user_id, this->m_user_id);
         JsonObj privates;
-                // groups,
-                // channels;
         std::cout << this->db.SELECT(privates_query, privates);
         response[PRIVATE_CHATS] = privates;
-        // response[GROUP_CHATS] = groups;
-        // response[CHANNELS] = channels;
     }
 
     void handleGetEnvMessages(const JsonObj& request, JsonObj& response)
@@ -141,13 +141,14 @@ public:
         response[TEXT_MESSAGES] = text_messages;
     };
 
-    void handleUserSearch(JsonObj& request, JsonObj& response)
+    void handleSearchUsername(JsonObj& request, JsonObj& response)
     {
         using namespace KeyWords;
-        auto Qry = fmt::format("SELECT * FROM users WHERE username LIKE {} OR name LIKE {}", request[SEARCH_PHRASE].asString(), request[SEARCH_PHRASE].asString());
-        Json::Value search_result;
+        auto Qry = fmt::format("SELECT user_id, username, name FROM users WHERE username LIKE '%{}%';",
+                                request[USERNAME_TO_SEARCH].asCString());
+        JsonArr search_result;
         this->db.SELECT(Qry, search_result);
-        response[RESULT] = search_result;
+        response[SEARCH_RESULT] = search_result;
         response[SUCCESSFUL] = true;
     }
 
@@ -160,18 +161,11 @@ public:
             auto get_info_query = fmt::format("SELECT * FROM private_chats_view WHERE env_id = {}", created_env_id);
             this->db.singleSELECT(get_info_query, response[ENV_INFO]);
             response[ENV_INFO][ENV_TYPE] = PRIVATE_CHAT;
+            response[ENV_INFO][INVALID_ENV_ID] = std::to_string(request[INVALID_ENV_ID].asUInt64());
             response[SUCCESSFUL] = true;
             return;
         }
         response[SUCCESSFUL] = false;
-    }
-
-    void handleNewMessage(JsonObj& request, JsonObj& response)
-    {
-        using namespace KeyWords;
-        auto message_type = request[MESSAGE_TYPE].asString();
-        if (message_type == TEXT_MESSAGE)
-            handleNewTextMessage(request, response);
     }
 
     void handleNewTextMessage(JsonObj& request, JsonObj& response)

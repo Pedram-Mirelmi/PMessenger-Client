@@ -21,7 +21,7 @@ class DataHandler : public QObject
 {
     Q_OBJECT
     friend class MainApp;
-    quint64 this_user_id;
+    InfoContainer& m_user_info;
 
     DataBase* m_db;
     NetworkHandler* m_net_handler;
@@ -29,52 +29,61 @@ class DataHandler : public QObject
     ConversationsListModel* m_conversation_list_model;
 
 public:
-    explicit DataHandler(QObject* parent, NetworkHandler* netHandler);
+    explicit DataHandler(QObject* parent, NetworkHandler* netHandler,
+                         InfoContainer& user_info);
 
-    void feedNewMessagesToModel(const int& env_id);
+    Q_INVOKABLE void openPrivateChatWith(const quint64 user_id,
+                                         const QString& name);
 
-    Q_INVOKABLE void startNewPrivateChat(const quint64 &user_id);
+    Q_INVOKABLE void sendNewTextMessage(const quint64& env_id,
+                                        const QString& message_text);
 
-    Q_INVOKABLE void sendNewTextMessage(const quint64& env_id, const QString& message_text);
-
-
+    Q_INVOKABLE void saveUser(const quint64& user_id,
+                              const QString& username,
+                              const QString& name);
 public slots:
     void handleNewData(const QJsonObject& net_message);
 
+    void fillConversationListModel();
 
-private:
+    void registerAllPendingChats();
+
+    void registerAllMessages();
+
+public:
     void handleFetchResult(const QJsonObject& net_message);
 
-    void sendReqForPrivateEnvDetails(const quint64& env_id);
+    void fetchPrivateEnvDetails(const quint64& env_id);
+
 
     void prepareDB();
+private:
+
+    void openPendingPrivateChat(const InfoContainer& chat_info,
+                                const QString& name,
+                                const bool& newly_created);
+
+    void openExistingPrivateChat(const InfoContainer& chat_info,
+                                 const QString& name);
+
+    void sendTextMessageToEnv(const quint16& env_id,
+                              const QString& message_text,
+                              const bool& to_pending);
 
 // function for pending fils
+    void feedEnvMessagesToMessagesModel(const quint64& env_id,
+                                        const bool& is_pending_env);
+
     bool tryToCreatePendingFiles();
 
     void readPendingsFromFile();
 
-    void addPrivateChatToPendingChats(const quint64& user_id);
+    quint16 addNewPrivateChatToPendingChats(const quint64& user_id);
 
-    void addNewTextMessageToPendingMessages(const quint64& env_id, const QString& message_text);
-
-    template<typename Loader_T>
-    bool deserializeFromFile(Loader_T& data_to_deserialize, const char* file_path);
-
-    template<typename Loader_T>
-    bool serializeToFile(Loader_T& data_to_serialize, const char * file_path);
+    void validatePrivateChat(const NetInfoContainer& env_info);
 
 private:
     void convertToHash(InfoContainer& target, const QJsonObject& source);
 };
-
-
-
-
-
-
-
-
-
 
 

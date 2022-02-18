@@ -101,25 +101,25 @@ public:
     uint64_t insertPrivateChatBetween(uint64_t first, uint64_t second)
     {
         using namespace KeyWords;
-        auto create_env_Qry = "INSERT INTO chat_envs() VALUES ();";
-        auto created_env_id = this->getLastInsertId("chat_envs", "env_id");
-        auto create_private_chat_query = fmt::format("INSERT INTO private_chats(env_id, first_person, second_person) "
-                                                     "VALUES ({},            {},         {});",
-                                                             created_env_id, first,      second);
-        auto add_creator = fmt::format("INSERT INTO chat_attends(user_id, env_id) "
-                                        "VALUES ({},    {});",
-                                                first, created_env_id);
-        auto add_other = fmt::format("INSERT INTO chat_attends(user_id, env_id) "
-                                     "VALUES ({},     {});",
-                                              second, created_env_id);
+        auto create_env_Qry = "INSERT INTO chat_envs DEFAULT VALUES RETURNING env_id AS id;";
 
-        bool successful1, successful2, successful3;
-        
-        this->execTransactionQuery(create_env_Qry);
-        this->execTransactionQuery(add_creator);
+        auto inserted_id = this->insertAndreturnLastId(create_env_Qry);
+  
+        auto create_private_chat_query = fmt::format(
+            "INSERT INTO private_chats(env_id, first_person, second_person) "
+            "VALUES                     ({},            {},         {});",
+                                        inserted_id,    first,      second);
+        auto add_one = fmt::format("INSERT INTO chat_attends(user_id, env_id) "
+                                        "VALUES ({},    {});",
+                                                first, inserted_id);
+        auto add_other = fmt::format("INSERT INTO chat_attends(user_id, env_id) "
+                                    "VALUES ({},      {});",
+                                             second,  inserted_id);
+
+        this->execTransactionQuery(create_private_chat_query);
+        this->execTransactionQuery(add_one);
         this->execTransactionQuery(add_other);
-        
-        return successful1 && successful2 && successful3 ? created_env_id : 0;
+        return inserted_id;
     }   
     
     uint64_t insertNewTextMessage(uint64_t owner_id, uint64_t env_id, const char* message_text)
@@ -148,15 +148,36 @@ public:
         return this->execTransactionQuery(query) ? this->getLastInsertId("users", "user_id") : 0;
     }
 
+
 protected:  
-public:
     uint64_t getLastInsertId(const char* tablename, const char* id_field)
     {
         JsonObj result;
         auto query = fmt::format("SELECT currval(pg_get_serial_sequence('{}', '{}')) AS id;"
                                                                 , tablename, id_field);
+        // auto query = fmt::format("SELECT last_value FROM {}_{}_seq AS id;"
+        //                                         , tablename, id_field);
+        
         this->singleSELECT(query, result);
+        std::cout << result << std::endl;
         return stoi(result["id"].asString());
+    }
+
+    uint64_t insertAndreturnLastId(const char* query)
+    {
+        JsonObj insert_result;
+        try
+        {        
+            this->singleSELECT(query, insert_result);
+            auto id = stoi(insert_result["id"].asString());
+            std::cout << insert_result << std::endl;
+            return id;
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << e.what() << '\n';
+            return 0;
+        }
     }
 
 private:

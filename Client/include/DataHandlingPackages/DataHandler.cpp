@@ -5,56 +5,76 @@
 #include <QFile>
 #include "../ClientKeywords.hpp"
 
-static const auto pending_messages_file_path = "/home/pedram/Desktop/PMessenger/Client/data/pending_messages";
-QMutex pending_messages_lock;
-
-static const auto pending_chats_file_path = "/home/pedram/Desktop/PMessenger/Client/data/pending_chats";
-QMutex pending_chats_lock;
-
-static const auto invalid_ids_file_path = "/home/pedram/Desktop/PMessenger/Client/data/invalid_ids";
-QMutex invalid_ids_lock;
-
-QHash<quint64, InfoContainer> pending_messages,
-                              pending_chats;
-
-InfoContainer invalid_ids;
-
-DataHandler::DataHandler(QObject *parent, NetworkHandler *netHandler)
-    :QObject(parent),
-      m_db(new DataBase(this)),
+DataHandler::DataHandler(QObject *parent, NetworkHandler *netHandler, InfoContainer& user_info)
+    : QObject(parent),
+      m_user_info(user_info),
+      m_db(new DataBase(this, this->m_user_info)),
       m_net_handler(netHandler),
       m_message_list_model(new MessageListModel(this)),
       m_conversation_list_model(new ConversationsListModel(this))
 {
     this->connect(this->m_db, &DataBase::needPrivateEnvDetails,
-                  this, &DataHandler::sendReqForPrivateEnvDetails);
+                  this, &DataHandler::fetchPrivateEnvDetails);
     this->connect(this->m_db, &DataBase::newTextMessageInserted,
                   this->m_message_list_model, &MessageListModel::considerNewTextMessage);
     this->connect(this->m_db, &DataBase::newTextMessageInserted,
                   this->m_conversation_list_model, &ConversationsListModel::popUpConversation);
 }
 
-void DataHandler::feedNewMessagesToModel(const int &env_id)
+void DataHandler::feedEnvMessagesToMessagesModel(const quint64 &env_id,
+                                                 const bool& is_pending_env)
 {
-    this->m_message_list_model->m_messages.clear();
-    this->m_message_list_model->clearModel();
-    // TODO -- needs to be corrected when added new message types features
     this->m_message_list_model->beginResetModel();
-    this->m_db->SELECT(this->m_message_list_model->m_messages,
-                       fmt::format("SELECT * FROM text_messages_view WHERE env_id={};", env_id).data());
+    this->m_message_list_model->m_messages.clear();
+    this->m_db->getEnvTextMessages(env_id, this->m_message_list_model->m_messages, is_pending_env);
     this->m_message_list_model->endResetModel();
 }
 
-void DataHandler::startNewPrivateChat(const quint64 &user_id)
+void DataHandler::validatePrivateChat(const NetInfoContainer &env_info)
 {
-    this->addPrivateChatToPendingChats(user_id);
-    this->m_net_handler->sendCreateNewPrivateChatReq(user_id);
+    using namespace KeyWords;
+    this->m_db->insertSinglePrivateEnv(env_info);
+    this->m_db->deletePendingChat(env_info[INVALID_ENV_ID].toString().toULongLong());
+    qDebug() << env_info[INVALID_ENV_ID];
+    this->m_conversation_list_model->changeConversationToValid(env_info[INVALID_ENV_ID].toString().toULongLong());
 }
 
-void DataHandler::sendNewTextMessage(const quint64 &env_id, const QString &message_text)
+// Q_INVOKABLE
+void DataHandler::openPrivateChatWith(const quint64 user_id, const QString& name)
 {
-    this->addNewTextMessageToPendingMessages(env_id, message_text);
-    this->m_net_handler->sendNewTextMessageReq(env_id, message_text);
+    using namespace KeyWords;
+    InfoContainer chat_info;
+    this->m_db->getPrivateChatInfo(user_id, chat_info);
+    if(chat_info.isEmpty()) // there is not any valid private chat with user_id
+    {
+        bool newly_created = false;
+        this->m_db->getPendingPrivateChatInfo(user_id, chat_info);
+        if (chat_info.isEmpty()) // there is not any pending private chat with user_id
+        {   // create pending private chat
+            newly_created = true;
+            auto invalid_id = this->m_db->insertNewPendingPrivateChat(user_id);
+            this->m_net_handler->sendCreateNewPrivateChatReq(user_id, invalid_id);
+            this->m_db->getPendingPrivateChatInfo(invalid_id, chat_info);
+        }
+        this->openPendingPrivateChat(chat_info, name, newly_created);
+        return;
+    }
+    this->feedEnvMessagesToMessagesModel(chat_info[ENV_ID].toUInt(), false);
+}
+
+// Q_INVOKABLE
+void DataHandler::sendNewTextMessage(const quint64 &env_id,
+                                     const QString &message_text)
+{
+    auto invalid_inserted_id = this->m_db->insertPendingTextMessage(env_id, message_text, true);
+    this->m_net_handler->sendNewTextMessageReq(env_id, message_text, invalid_inserted_id);
+}
+
+void DataHandler::saveUser(const quint64 &user_id,
+                           const QString &username,
+                           const QString &name)
+{
+    this->m_db->tryToInsertUser(user_id, username, name);
 }
 
 // public slot
@@ -69,13 +89,70 @@ void DataHandler::handleNewData(const QJsonObject &net_message)
     else if (data_type == ENV_DETAILS)
     {
         this->m_db->insertSinglePrivateEnv(net_message[ENV_INFO].toObject());
-        this->m_db->insertTextMessages(net_message[TEXT_MESSAGES].toArray());
+        this->m_db->insertValidTextMessages(net_message[TEXT_MESSAGES].toArray());
     }
     else if (data_type == MESSAGE)
     {
         if (net_message.contains(TEXT_MESSAGES))
-            this->m_db->insertTextMessages(net_message[TEXT_MESSAGES].toArray());
+            this->m_db->insertValidTextMessages(net_message[TEXT_MESSAGES].toArray());
     }
+    else if (data_type == CHAT_CREATION_CONFIRMATION)
+    {
+        if(net_message[ENV_INFO][ENV_TYPE] == PRIVATE_CHAT)
+            this->validatePrivateChat(net_message[ENV_INFO].toObject());
+    }
+}
+
+void DataHandler::fillConversationListModel()
+{
+    using namespace KeyWords;
+    this->m_conversation_list_model->beginResetModel();
+    QVector<InfoContainer> all_conversations;
+    this->m_db->getAllRegisteredEnvs(all_conversations);
+    auto number_of_registered_envs = all_conversations.size();
+    this->m_db->getAllPendingEnvs(all_conversations);
+    quint16 i = 0;
+    auto& new_data = this->m_conversation_list_model->m_conversations;
+    new_data.reserve(all_conversations.size());
+    for (; i < number_of_registered_envs; i++)
+        new_data.emplace_back(
+                    all_conversations[i][ENV_ID].toUInt(),
+                    false,
+                    ((all_conversations[i][FIRST_PERSON].toUInt() == this->m_user_info[USER_ID].toUInt()) ?
+                        this->m_db->getNameOfUser(all_conversations[i][FIRST_PERSON].toUInt()) :
+                        this->m_db->getNameOfUser(all_conversations[i][SECOND_PERSON].toUInt())),
+                    this->m_db->getLastEnvMessageId(all_conversations[i][ENV_ID].toUInt())
+                 );
+    for (; i < all_conversations.size(); i++)
+        new_data.emplace_back(
+                    all_conversations[i][INVALID_ENV_ID].toUInt(),
+                    true,
+                    (all_conversations[i][FIRST_PERSON].toUInt() == this->m_user_info[USER_ID].toUInt()) ?
+                        this->m_db->getNameOfUser(all_conversations[i][FIRST_PERSON].toUInt()) :
+                        this->m_db->getNameOfUser(all_conversations[i][SECOND_PERSON].toUInt()),
+                    this->m_db->getMaxMessagesId()
+                 );
+    this->m_conversation_list_model->endResetModel();
+}
+
+void DataHandler::registerAllPendingChats()
+{
+    using namespace KeyWords;
+    QVector<InfoContainer> envs_infos;
+    this->m_db->getAllPendingEnvs(envs_infos);
+    for(const auto& env_info : envs_infos)
+    {
+        if(env_info[ENV_TYPE].toString() == PRIVATE_CHAT)
+        {
+            this->m_net_handler->sendCreateNewPrivateChatReq(env_info[SECOND_PERSON].toUInt(),
+                                                             env_info[INVALID_ENV_ID].toUInt());
+        }
+    }
+}
+
+void DataHandler::registerAllMessages()
+{
+
 }
 
 // private
@@ -92,13 +169,10 @@ void DataHandler::handleFetchResult(const QJsonObject &net_message)
 }
 
 // private
-void DataHandler::sendReqForPrivateEnvDetails(const quint64 &env_id)
+void DataHandler::fetchPrivateEnvDetails(const quint64 &env_id)
 {
     using namespace KeyWords;
-    QJsonObject req;
-    req[NET_MESSAGE_TYPE] = GET_PRIVATE_ENV_DETAILS;
-    req [ENV_ID] = (quint16)env_id;
-    this->m_net_handler->m_sender->sendNetMessage(req);
+    this->m_net_handler->sendPrivateEnvDetailsReq(env_id);
 }
 
 //private
@@ -106,123 +180,24 @@ void DataHandler::prepareDB()
 {
     this->m_db->tryToInit();
     this->m_net_handler->sendFetchReq();
-    this->tryToCreatePendingFiles();
-    this->readPendingsFromFile();
 }
 
-bool DataHandler::tryToCreatePendingFiles()
+
+void DataHandler::openPendingPrivateChat(const InfoContainer& chat_info,
+                                         const QString& name,
+                                         const bool& newly_created)
 {
-    QFile file;
-    bool inited = false;
-    if (file.exists(pending_messages_file_path))
-    {
-        QFile pending_messages_file(pending_messages_file_path);
-        pending_messages_file.open(QFile::ReadWrite);
-        pending_messages_file.close();
-        serializeToFile(pending_messages, pending_messages_file_path);
-        inited = true;
-    }
-    if (file.exists(pending_chats_file_path))
-    {
-        QFile pending_chats_file (pending_chats_file_path);
-        pending_chats_file.open(QFile::ReadWrite);
-        pending_chats_file.close();
-        serializeToFile(pending_chats, pending_chats_file_path);
-        inited = true;
-    }
-    if (!file.exists(invalid_ids_file_path))
-    {
-        using namespace KeyWords;
-        QFile invalid_ids_file(invalid_ids_file_path);
-        invalid_ids_file.open(QFile::ReadWrite);
-        invalid_ids_file.close();
-        invalid_ids[LAST_INVALID_CHAT_ID] = invalid_ids[LAST_INVALID_MESSAGE_ID] = 0;
-        serializeToFile(invalid_ids, invalid_ids_file_path);
-        inited = true;
-    }
-    return inited;
-
-}
-
-// private
-void DataHandler::readPendingsFromFile() // thread safe
-{
-    pending_messages_lock.lock();
-    this->deserializeFromFile(pending_messages, pending_messages_file_path);
-    pending_messages_lock.unlock();
-
-    pending_chats_lock.lock();
-    this->deserializeFromFile(pending_chats, pending_chats_file_path);
-    pending_chats_lock.unlock();
-
-    invalid_ids_lock.lock();
-    this->deserializeFromFile(invalid_ids, invalid_ids_file_path);
-    invalid_ids_lock.unlock();
-}
-
-//private
-void DataHandler::addPrivateChatToPendingChats(const quint64 &user_id)
-{
-    pending_chats_lock.lock();
-
     using namespace KeyWords;
-    InfoContainer chat_info;
-    chat_info[FIRST_PERSON] = this->this_user_id;
-    chat_info[SECOND_PERSON] = user_id;
-    chat_info[ENV_ID] = invalid_ids[LAST_INVALID_CHAT_ID] = invalid_ids[LAST_INVALID_CHAT_ID].toUInt() + 1;
-
-    pending_chats_lock.unlock();
+    if (newly_created)
+        this->m_conversation_list_model->tryToAppendConversation({
+                                                                     chat_info[INVALID_ENV_ID].toUInt(),
+                                                                     true,
+                                                                     name,
+                                                                     this->m_db->getMaxMessagesId()
+                                                                 });
+    feedEnvMessagesToMessagesModel(chat_info[INVALID_ENV_ID].toUInt(), true);
 }
 
-void DataHandler::addNewTextMessageToPendingMessages(const quint64 &env_id, const QString &message_text)
-{
-    pending_messages_lock.lock();
-
-    using namespace KeyWords;
-    InfoContainer message_info;
-    message_info[MESSAGE_TEXT] = message_text;
-    message_info[OWNER_ID] = this->this_user_id;
-    message_info[ENV_ID] = env_id;
-    message_info[MESSAGE_ID] = invalid_ids[LAST_INVALID_MESSAGE_ID] = invalid_ids[LAST_INVALID_MESSAGE_ID].toUInt() + 1;
-
-    pending_messages_lock.unlock();
-}
-
-
-template<typename Loader_T>
-bool DataHandler::deserializeFromFile(Loader_T &data_to_deserialize, const char *file_path)
-{
-    QFile file(file_path);
-    if (!file.open(QFile::ReadOnly))
-    {
-        qCritical() << "couldn't open file " << file_path;
-        return false;
-    }
-    QDataStream stream(&file);
-    if (stream.version() != QDataStream::Qt_6_2)
-        qCritical() << "INVALID Qt version!";
-
-    stream >> data_to_deserialize;
-    file.close();
-    return true;
-}
-
-template<typename Loader_T>
-bool DataHandler::serializeToFile(Loader_T &data_to_serialize, const char *file_path)
-{
-    QFile file(file_path);
-    if (!file.open(QFile::WriteOnly))
-    {
-        qCritical() << "couldn't open file " << file_path;
-        return false;
-    }
-    QDataStream stream(&file);
-    stream.setVersion(QDataStream::Qt_6_2);
-
-    stream << data_to_serialize;
-    file.close();
-    return true;
-}
 
 // private
 void DataHandler::convertToHash(InfoContainer &target, const QJsonObject &source)

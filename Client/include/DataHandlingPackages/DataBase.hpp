@@ -9,62 +9,103 @@
 #include <QDir>
 #include <QFile>
 #include <QObject>
+//#include <fmt/format.h>
 #include "../Others/stringTools.hpp"
 #include "../Others/TypeDefs.hpp"
+#include <QSqlError>
 
 struct Message;
 
 class DataHandler;
+class MainApp;
 
 class DataBase : public QObject
 {
     Q_OBJECT
 
     QSqlDatabase db;
-
+    InfoContainer& m_user_info;
     friend class DataHandler;
+    friend class MainApp;
+
 public:
-    DataBase(QObject* parent);
+    DataBase(QObject* parent, InfoContainer& user_info);
 
     bool tryToInit();
 
     void tryToInsertPrivateEnvs(const QJsonValueRef& envs);
 
+    void tryToInsertUser(const quint64 &user_id,
+                         const QString &username,
+                         const QString &name);
+
+    void deletePendingChat(const quint64& invalid_id);
+
     void insertPrivateEnvs(const QJsonValueRef& envs);
 
     void insertSinglePrivateEnv(const QJsonObject& env_info);
 
-    void insertTextMessages(const QJsonArray& messages);
+    void insertValidTextMessages(const QJsonArray& messages);
 
-    void insertGroupMessages(const QJsonArray& messages);
+    quint16 insertNewPendingPrivateChat(const quint64& user_id);
 
-    bool insertGroupEnv(const QJsonObject& env);
+    quint16 insertPendingTextMessage(const quint16& env_id,
+                                     const QString& message_text,
+                                     const bool& to_pending_env);
 
-    bool insertChannelEnv(const QJsonObject& env);
 
-    void insertChannelMessages(const QJsonArray& messages);
+
+    bool privateChatAlreadyExists(const quint64& user_id) const;
+
+    void getPendingPrivateChatInfo(const quint64& user_id,
+                                   InfoContainer& chat_info) const;
+
+    void getPrivateChatInfo(const quint64& user_id,
+                            InfoContainer& chat_info) const;
+
+    void getEnvTextMessages(const quint64& env_id,
+                            QVector<InfoContainer>& messages,
+                            const bool& pending_env) const;
+
+    void getAllRegisteredEnvs(QVector<InfoContainer>& envs);
+
+    void getAllPendingEnvs(QVector<InfoContainer>& envs);
+
+    QString getNameOfUser(const quint64& user_id);
+
+    quint64 getLastEnvMessageId(const quint64 env_id);
 
 private:
-    void convertToHash(InfoContainer &target, const QJsonObject &source);
+    static void convertToHash(InfoContainer &target,
+                              const QJsonObject &source);
 
-    void insertSingleTextMessage(const QJsonObject& msg_info);
+    void insertValidTextMessage(const QJsonObject& msg_info);
 
     bool tryToCreateDBFile();
 
     bool createTables();
 
-    bool SELECT(QVector<InfoContainer>& result_set, const char query_str[]) const;
+    bool SELECT(QVector<InfoContainer>& result_set,
+                const char query_str[]) const;
+
+    bool singleSELECT(InfoContainer& result,
+                      const char query_str[]) const;
 
     bool execOtherQry(const char query_str[]);
 
-    QJsonArray convertToNormalForm(const QJsonArray& data);
+    QJsonArray convertToNormalForm(const QJsonArray& data) const;
 
     bool envExists(const quint64& env_id) const;
+
+    quint64 getLastInsertId() const;
+
+    quint64 getMaxMessagesId() const;
 
 signals:
     void newTextMessageInserted(const QJsonObject& msg_info);
 
     void needPrivateEnvDetails(const quint64 &env_id); // need info and messages
+
 };
 
 

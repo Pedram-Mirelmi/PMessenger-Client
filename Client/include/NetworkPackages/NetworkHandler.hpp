@@ -25,7 +25,9 @@ public:
 signals:
     void netConnectedChanged(bool connection_status);
 public:
-    explicit NetworkHandler(QObject* parent, const QString& address = "127.0.0.1", quint16 port = 54000);
+    explicit NetworkHandler(QObject* parent,
+                            const QString& address = "127.0.0.1",
+                            quint16 port = 54000);
 
     void setAutoConnect(bool enable);
 
@@ -37,9 +39,13 @@ public:
 
     void sendFetchReq();
 
-    void sendCreateNewPrivateChatReq(const quint64& user_chat_with);
+    void sendCreateNewPrivateChatReq(const quint64& user_chat_with, const quint64& invalid_id);
 
-    void sendNewTextMessageReq(const quint64& env_id, const QString& message_text);
+    void sendNewTextMessageReq(const quint64& env_id,
+                               const QString& message_text,
+                               const quint64& invalid_id);
+
+    void sendPrivateEnvDetailsReq(const quint64& env_id);
 
 public slots:
     void connectToServer();
@@ -47,9 +53,9 @@ public slots:
 private:
     bool net_connected = false;
 signals:
+    void entrySuccessful(const QJsonObject& msg);
     void newDataArrived(const QJsonObject& msg);
     void entryNetMessageArrived(const QJsonObject& msg);
-    void searchUsernameResultArrived(const QJsonObject& msg);
+    void searchUsernameResultArrived(const QJsonArray& search_result);
     void newChatCreationMsgArrived(const QJsonObject& msg);
-    void testSignal(QString s);
 };

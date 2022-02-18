@@ -1,8 +1,9 @@
+#define FMT_HEADER_ONLY
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include "./include/MainApp.hpp"
-
+#include <fstream>
 
 
 int main(int argc, char *argv[])
@@ -18,8 +19,7 @@ int main(int argc, char *argv[])
 
 
     engine.rootContext()->setContextProperty("mainApp", &backend_app);
-    engine.rootContext()->setContextProperty("netConn", backend_app.m_network_handler);
-    engine.rootContext()->setContextProperty("dataHolder", backend_app.m_data_handler);
+
 
     const QUrl url(QStringLiteral("qrc:/QML/main.qml"));
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,

@@ -38,25 +38,25 @@ Rectangle
             spacing: 5
             Layout.fillWidth: true
             Layout.fillHeight: true
-            model: messages_model
+            model: messagesModel
 
 
             delegate: Component
             {
                 Rectangle
                 {
-                    anchors.right: model.sender_id === 1 ? chatList.contentItem.right : undefined
-                    anchors.left: model.sender_id !== 1 ? chatList.contentItem.left : undefined
+                    anchors.right: model.owner_id === 1 ? chatList.contentItem.right : undefined
+                    anchors.left: model.owner_id !== 1 ? chatList.contentItem.left : undefined
                     anchors.margins: 10
                     width: Math.min(messageText.implicitWidth + messageText.anchors.margins, 3/4 * chatList.width)
                     height: messageText.implicitHeight + 2*messageText.anchors.margins
-                    color: model.sender_id === 1 ? "lightblue" : "lightgrey"
+                    color: model.owner_id === 1 ? "lightblue" : "lightgrey"
                     Label
                     {
                         id: messageText
                         anchors.fill: parent
                         anchors.margins: 12
-                        text: "long text long text long text long text long text long text long text long text long text long text long text long text long text long text long text long text long text long text long text long text long text"
+                        text: model.message_text
                         wrapMode: Label.Wrap
                     }
 

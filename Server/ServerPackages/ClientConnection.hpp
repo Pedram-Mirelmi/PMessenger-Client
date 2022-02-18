@@ -16,7 +16,6 @@ class ClientConnection
 {
 typedef std::unordered_map<id_T, std::shared_ptr<ClientConnection>> conn_set;
 private:
-	// sockaddr_in hint; 
     NetworkHandler networkHandler;
     id_T user_id = INVALID_ID;
     conn_set& other_connections;
@@ -46,27 +45,22 @@ public:
                     std::cout << "connection closed properly by client" << std::endl;
                     return INVALID_ID;
                 }
-                std::cout << (current_request[NET_MESSAGE_TYPE].asString() == REGISTER) << std::endl;
                 this->rh.handle(current_request, current_response);
                 if ((current_request[NET_MESSAGE_TYPE].asString() == REGISTER
                      || current_request[NET_MESSAGE_TYPE].asString() == LOGIN) 
                      && current_response[SUCCESSFUL].asBool())
                 {
-                    std::cout << current_response << std::endl;
                     this->user_id = std::stoi(current_response[USER_INFO][USER_ID].asString());
                     this->networkHandler.sendMessage(current_response);
                     break;
                 }
                 this->networkHandler.sendMessage(current_response);
             }
-            current_request.clear();
-            current_response.clear();
-            std::thread(&ClientConnection::controlOnlineTime, this).detach();
+            // std::thread(&ClientConnection::controlOnlineTime, this).detach();
             return this->user_id;
         }
         catch (std::exception& e)
         {
-            
             std::cout << e.what() << std::endl;
             return INVALID_ID;
         }
@@ -82,17 +76,16 @@ public:
                 current_response.clear();
                 current_request.clear();
                 this->networkHandler.receiveMessage(current_request);
-                if (current_request[NET_MESSAGE_TYPE].asCString() == CLOSE_CONNECTION)
+                if (current_request[NET_MESSAGE_TYPE].asString() == CLOSE_CONNECTION)
                 {
                     std::cout << "connection closed properly by client" << std::endl;
                     return;
                 }
-                std::thread(&ClientConnection::controlOnlineTime, this).detach();
+                // std::thread(&ClientConnection::controlOnlineTime, this).detach();
                 this->rh.handle(current_request, current_response);
                 this->networkHandler.sendMessage(current_response);
-                std::thread(&ClientConnection::checkForSpecialOperations, this, current_request, current_response).detach();
-                current_request.clear();
-                current_response.clear();
+                // std::thread(&ClientConnection::checkForSpecialOperations, this, current_request, current_response).detach();
+
             }
         }
         catch (std::exception& e)
@@ -115,7 +108,7 @@ private:
     void checkForSpecialOperations(msg_t request, msg_t response)
     {
         using namespace KeyWords;
-        if (request[NET_MESSAGE_TYPE] == SEND_NEW_MESSAGE
+        if (request[NET_MESSAGE_TYPE] == NEW_TEXT_MESSAGE
             && response[SUCCESSFUL].asBool() == true)
         {
             this->announceNewMessageToOthers(response[MESSAGE_INFO]);
@@ -132,7 +125,7 @@ private:
         for (const std::string& id_str : audiences)
             threads.emplace_back([&]() 
                 {
-                    auto audience = other_connections[std::stoi(id_str)];
+                    auto audience = this->other_connections[std::stoi(id_str)];
                     if (audience != NULL)
                         audience->announceNewMessageToMe(current_request);
                 }

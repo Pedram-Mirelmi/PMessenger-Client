@@ -32,6 +32,16 @@ Rectangle
                 text: "M-Messenger"
             }
 
+//            Button
+//            {
+//                Label
+//                {
+//                    text: "test"
+//                }
+//                onClicked: mainApp.test()
+//                onDoubleClicked: mainApp.test2()
+//            }
+
             ToolButton
             {
                 id: contactsFooter
@@ -64,7 +74,7 @@ Rectangle
         width: parent.width
         clip: true
         anchors.bottom: parent.bottom
-        model: chats_model
+        model: chatsModel
 
 
         delegate: Component
@@ -78,20 +88,20 @@ Rectangle
                     anchors.fill: parent
                     onClicked:
                     {
-                        console.log("clicked on", model.contact_name)
+                        console.log("clicked on", model.name)
                     }
                 }
 
                 Label
                 {
                     id: contactLabelId
-                    text: model.contact_name
+                    text: model.name
                     font.pointSize: 15
                 }
                 Label
                 {
                     id: lastMessgeId
-                    text: model.last_message
+                    text: "some message ..."
                     font.pixelSize: 10
                     anchors.top: contactLabelId.bottom
                     anchors.topMargin: 5

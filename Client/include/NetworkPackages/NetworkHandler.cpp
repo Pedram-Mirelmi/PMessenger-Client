@@ -1,5 +1,5 @@
 #include "./NetworkHandler.hpp"
-
+#include <QJsonArray>
 // constructor
 NetworkHandler::NetworkHandler(QObject *parent, const QString &address, quint16 port)
     :   QObject(parent),
@@ -45,9 +45,9 @@ void NetworkHandler::setAutoConnect(bool enable)
                    this, &NetworkHandler::connectToServer);
 }
 
+// public
 bool NetworkHandler::netConnected()
 {
-
     return this->net_connected;
 }
 
@@ -61,7 +61,6 @@ void NetworkHandler::sendRegisterReq(const QString &username, const QString &pas
     request[USERNAME] = username;
     request[PASSWORD] = password;
     this->m_sender->sendNetMessage(request);
-    emit this->testSignal("Hiiiiii the fuuuckkkkkkkkkkkk");
 }
 
 // Q_INVOKABLE
@@ -117,7 +116,7 @@ void NetworkHandler::sendNewTextMessageReq(const quint64& env_id,
     this->m_sender->sendNetMessage(req);
 }
 
-void NetworkHandler::sendReqForPrivateEnvDetails(const quint64& env_id)
+void NetworkHandler::sendPrivateEnvDetailsReq(const quint64& env_id)
 {
     using namespace KeyWords;
     QJsonObject req;
@@ -138,19 +137,17 @@ void NetworkHandler::connectToServer()
 void NetworkHandler::handleNewNetMessage(const QJsonObject &net_msg)
 {
     using namespace KeyWords;
-    if (net_msg[NET_MESSAGE_TYPE] == REGISTER_RESULT || net_msg[NET_MESSAGE_TYPE] == LOGIN_RESULT)
+    if (net_msg[NET_MESSAGE_TYPE] == REGISTER_RESULT
+            || net_msg[NET_MESSAGE_TYPE] == LOGIN_RESULT)
     {
         emit this->entryNetMessageArrived(net_msg);
+        if (net_msg[SUCCESSFUL].toBool())
+            emit this->entrySuccessful(net_msg);
         return;
     }
     if (net_msg[NET_MESSAGE_TYPE] == SEARCH_USERNAME_RESULT)
     {
-        emit this->searchUsernameResultArrived(net_msg);
-        return;
-    }
-    else if (net_msg[NET_MESSAGE_TYPE] == CHAT_CREATION_CONFIRMATION)
-    {
-        emit this->newChatCreationMsgArrived(net_msg);
+        emit this->searchUsernameResultArrived(net_msg[SEARCH_RESULT].toArray());
         return;
     }
     if (net_msg[NET_MESSAGE_TYPE] == DATA)
@@ -158,8 +155,6 @@ void NetworkHandler::handleNewNetMessage(const QJsonObject &net_msg)
         emit this->newDataArrived(net_msg);
         return;
     }
-
-
 }
 
 

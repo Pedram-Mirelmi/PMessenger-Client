@@ -9,9 +9,13 @@ import "Dialogs/"
 
 Item
 {
-    id: root
     anchors.fill: parent
     property int user_id: -1
+
+    NewChatDialog
+    {
+        id: newChatDialog
+    }
 
     SplitView
     {
@@ -29,8 +33,6 @@ Item
         }
 
     }
-    NewChatDialog
-    {
-        id: newChatDialog
-    }
+
+
 }

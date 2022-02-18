@@ -34,6 +34,8 @@ QVariant MessageListModel::data(const QModelIndex &index, int role) const
         return this->m_messages[index.row()][MESSAGE_ID];
     case owner_id:
         return this->m_messages[index.row()][OWNER_ID];
+    case message_text:
+        return this->m_messages[index.row()][MESSAGE_TEXT];
 //    case created_at:
 //        return this->m_messages[row].created_at;
     case message_type:
@@ -58,9 +60,9 @@ bool MessageListModel::setData(const QModelIndex &index, const QVariant &value, 
 //        case created_at:
 //            this->m_messages[row].created_at = value.toDateTime();
 //            break;
-        case message_type:
-            this->m_messages[index.row()][MESSAGE_TYPE] = value.toString();
-            break;
+//        case message_type:
+//            this->m_messages[index.row()][MESSAGE_TYPE] = value.toString();
+//            break;
         }
         emit dataChanged(index, index, QVector<int>() << role);
         return true;
@@ -82,7 +84,7 @@ QHash<int, QByteArray> MessageListModel::roleNames() const
     QHash<int, QByteArray> names;
     names[Roles::message_id] = MESSAGE_ID;
     names[Roles::owner_id] = OWNER_ID;
-    names[Roles::message_type] = MESSAGE_TYPE;
+//    names[Roles::message_type] = MESSAGE_TYPE;
     return names;
 };
 
