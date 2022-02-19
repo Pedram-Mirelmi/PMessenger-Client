@@ -86,7 +86,7 @@ public:
             {
                 JsonObj new_record;
                 for (unsigned int i = 0; i < db_result.columns(); i++)
-                    new_record[columns[i]] = row[i].is_null() ? "" : row[i].as<std::string>();;
+                    new_record[columns[i]] = row[i].is_null() ? "" : row[i].as<std::string>();
                 result.append(new_record);
             }
             return true;
@@ -98,10 +98,12 @@ public:
         }
     };
 
-    uint64_t insertPrivateChatBetween(uint64_t first, uint64_t second)
+    uint64_t insertPrivateChatBetween(const uint64_t& first, 
+                                      const uint64_t& second)
     {
         using namespace KeyWords;
-        auto create_env_Qry = "INSERT INTO chat_envs DEFAULT VALUES RETURNING env_id AS id;";
+        auto create_env_Qry = "INSERT INTO chat_envs DEFAULT "
+                              "VALUES RETURNING env_id AS id;";
 
         auto inserted_id = this->insertAndreturnLastId(create_env_Qry);
   
@@ -132,7 +134,7 @@ public:
         {
             auto created_message_id = this->getLastInsertId("messages", "message_id");
             auto create_text_message_query = fmt::format("INSERT INTO text_messages(message_id, message_text) "
-                                                        "VALUES({},                 {}",
+                                                         "VALUES({},                 {}",
                                                                 created_message_id, toRaw(message_text));
 
             return  this->execTransactionQuery(create_message_query) ? created_message_id : 0;
@@ -143,8 +145,9 @@ public:
     uint64_t insertNewUser(const char* username, const char* password)
     {
         using namespace KeyWords;
-        auto query = fmt::format("INSERT INTO users(username, password)"
-                                 "VALUES ('{}',     '{}');", username, password);                                 
+        auto query = fmt::format("INSERT INTO users(username, name, password)"
+                                 "VALUES ('{}', '{}',  '{}');",
+                                  username, username, password);                                 
         return this->execTransactionQuery(query) ? this->getLastInsertId("users", "user_id") : 0;
     }
 
@@ -181,7 +184,8 @@ protected:
     }
 
 private:
-    inline void setCurrentColumns(const pqxx::result& result_set, std::vector<const char*>& columns)
+    inline void setCurrentColumns(const pqxx::result& result_set,
+                                  std::vector<const char*>& columns)
     {
         columns.clear();
         columns.reserve(result_set.columns());

@@ -118,8 +118,9 @@ Dialog
                                 anchors.fill: parent
                                 onClicked:
                                 {
+                                    console.log("clicked on " + model.name)
+                                    db.tryToInsertUser(model.user_id, model.username, model.name)
                                     dataHolder.openPrivateChatWith(model.user_id, model.name)
-                                    dataHolder.saveUser(model.user_id, model.username, model.name)
                                     newChatDialog.close()
                                 }
                             }

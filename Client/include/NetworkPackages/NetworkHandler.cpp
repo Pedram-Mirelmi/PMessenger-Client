@@ -1,5 +1,7 @@
 #include "./NetworkHandler.hpp"
 #include <QJsonArray>
+#include <QJsonValue>
+#include <QJsonObject>
 // constructor
 NetworkHandler::NetworkHandler(QObject *parent, const QString &address, quint16 port)
     :   QObject(parent),
@@ -10,13 +12,13 @@ NetworkHandler::NetworkHandler(QObject *parent, const QString &address, quint16 
       m_sender(new NetMessageSender(this, this->m_socket))
 {
     connect(this->m_socket, &QTcpSocket::disconnected,
-            this->m_receiver, &NetMessageReceiver::stopListening);
+            this->m_receiver, &NetMessageReceiver::stopListening, Qt::UniqueConnection);
 
     connect(this->m_socket, &QTcpSocket::connected,
             this->m_receiver, &NetMessageReceiver::startListening, Qt::UniqueConnection);
 
     connect(this->m_receiver, &NetMessageReceiver::newNetMessageArrived,
-            this, &NetworkHandler::handleNewNetMessage);
+            this, &NetworkHandler::handleNewNetMessage, Qt::UniqueConnection);
 
     connect(this->m_socket, &QTcpSocket::connected, [=]()
                 {
@@ -98,8 +100,8 @@ void NetworkHandler::sendCreateNewPrivateChatReq(const quint64 &user_chat_with,
     using namespace KeyWords;
     QJsonObject req;
     req[NET_MESSAGE_TYPE] = CREATE_NEW_PRIVATE_CHAT;
-    req[USER_ID] = (quint16)user_chat_with;
-    req[INVALID_ENV_ID] = (quint16)invalid_env_id;
+    req[USER_ID] = (qint64)user_chat_with;
+    req[INVALID_ENV_ID] = (qint64)invalid_env_id;
     this->m_sender->sendNetMessage(req);
 }
 
@@ -111,17 +113,17 @@ void NetworkHandler::sendNewTextMessageReq(const quint64& env_id,
     QJsonObject req;
     req[NET_MESSAGE_TYPE] = NEW_TEXT_MESSAGE;
     req[MESSAGE_TEXT] = message_text;
-    req[INVALID_MESSAGE_ID] = (quint16)invalid_message_id;
-    req[ENV_ID] = (quint16)env_id;
+    req[INVALID_MESSAGE_ID] = (qint64)invalid_message_id;
+    req[ENV_ID] = (qint64)env_id;
     this->m_sender->sendNetMessage(req);
 }
 
-void NetworkHandler::sendPrivateEnvDetailsReq(const quint64& env_id)
+void NetworkHandler::sendEnvDetailsReq(const quint64& env_id)
 {
     using namespace KeyWords;
     QJsonObject req;
-    req[NET_MESSAGE_TYPE] = GET_PRIVATE_ENV_DETAILS;
-    req [ENV_ID] = (quint16)env_id;
+    req[NET_MESSAGE_TYPE] = GET_ENV_DETAILS;
+    req [ENV_ID] = (qint64)env_id;
 }
 
 

@@ -17,11 +17,12 @@ DataBase::DataBase(QObject* parent, InfoContainer& user_info)
      m_user_info(user_info)
 {}
 
+
 bool DataBase::tryToInit()
 {
-    qDebug() << this->db.lastError().text();
+    using namespace KeyWords;
     QFile file;
-    if (!file.exists(QString(data_path) + database_filename))
+    if (!file.exists(QString(data_path) + this->m_user_info[USERNAME].toString() + ".sqlite"))
     {
         if (!this->tryToCreateDBFile())
             qCritical() << "Couldn't create or open database files";
@@ -32,7 +33,7 @@ bool DataBase::tryToInit()
             qCritical() << "Couldn't create tables";
         return true;
     }
-    this->db.setDatabaseName(QString(data_path) + database_filename);
+    this->db.setDatabaseName(QString(data_path) + this->m_user_info[USERNAME].toString() + ".sqlite");
     if (!this->db.open())
         qCritical() << "Couldn't open database";
 
@@ -82,20 +83,25 @@ void DataBase::insertSinglePrivateEnv(const QJsonObject &env_info)
     const auto create_private_query = fmt::format("INSERT INTO "
                                                   "private_chats(env_id, first_person, second_person) "
                                                   "VALUES({},   {},     {});",
-                                                  env_info[ENV_ID].toInteger(),
-                                                  env_info[FIRST_PERSON].toInteger(),
-                                                  env_info[SECOND_PERSON].toInteger());
+                                                  env_info[ENV_ID].toString().toULongLong(),
+                                                  env_info[FIRST_PERSON].toString().toULongLong(),
+                                                  env_info[SECOND_PERSON].toString().toULongLong());
     this->execOtherQry(create_private_query.c_str());
 }
 
-bool DataBase::privateChatAlreadyExists(const quint64 &user_id) const
+bool DataBase::validPrivateChatAlreadyExists(const quint64 &user_id, InfoContainer& chat_info) const
 {
-    InfoContainer result;
-    this->getPrivateChatInfo(user_id, result);
-    return !result.isEmpty();
+    this->getValidPrivateChatInfoByOtherUser(user_id, chat_info);
+    return !chat_info.isEmpty();
 }
 
-void DataBase::getPendingPrivateChatInfo(const quint64 &user_id,
+bool DataBase::pendingPrivateChatAlreadyExists(const quint64 &user_id, InfoContainer& chat_info) const
+{
+    this->getPendingPrivateChatInfoByOtherUser(user_id, chat_info);
+    return !chat_info.isEmpty();
+}
+
+void DataBase::getPendingPrivateChatInfoByOtherUser(const quint64 &user_id,
                                          InfoContainer &chat_info) const
 {
     this->singleSELECT(chat_info, fmt::format("SELECT * FROM pending_chat_envs "
@@ -103,12 +109,28 @@ void DataBase::getPendingPrivateChatInfo(const quint64 &user_id,
                                               user_id, user_id).c_str());
 }
 
-void DataBase::getPrivateChatInfo(const quint64 &user_id,
+void DataBase::getPendingPrivateChatInfoByEnvId(const quint64 &invalid_env_id,
+                                                InfoContainer &chat_info) const
+{
+    this->singleSELECT(chat_info, fmt::format("SELECT * FROM pending_chat_envs "
+                                              "WHERE invalid_env_id = {}",
+                                              invalid_env_id).c_str());
+}
+
+void DataBase::getValidPrivateChatInfoByOtherUser(const quint64 &user_id,
                                   InfoContainer& chat_info) const
 {
     this->singleSELECT(chat_info, fmt::format("SELECT * FROM private_chats "
                                               "WHERE first_person = {} OR second_person = {}",
                                               user_id, user_id).c_str());
+}
+
+void DataBase::getValidPrivateChatInfoByEnvId(const quint64 &env_id,
+                                              InfoContainer &chat_info) const
+{
+    this->singleSELECT(chat_info, fmt::format("SELECT * FROM private_chats "
+                                              "WHERE env_id = {}",
+                                              env_id).c_str());
 }
 
 void DataBase::getEnvTextMessages(const quint64 &env_id,
@@ -138,7 +160,7 @@ void DataBase::getAllPendingEnvs(QVector<InfoContainer> &envs)
     this->SELECT(envs, "SELECT * FROM pending_chat_envs");
 }
 
-QString DataBase::getNameOfUser(const quint64 &user_id)
+QString DataBase::getNameOfUser(const quint64 &user_id) const
 {
     InfoContainer user_info;
     this->singleSELECT(user_info, fmt::format("SELECT name FROM users "
@@ -146,7 +168,7 @@ QString DataBase::getNameOfUser(const quint64 &user_id)
     return user_info[KeyWords::NAME].toString();
 }
 
-quint64 DataBase::getLastEnvMessageId(const quint64 env_id)
+quint64 DataBase::getLastEnvMessageId(const quint64 env_id) const
 {
     InfoContainer info;
     this->singleSELECT(info, fmt::format("SELECT MAX(message_id) AS id "
@@ -194,7 +216,7 @@ void DataBase::tryToInsertUser(const quint64 &user_id,
                                const QString &name)
 {
     this->execOtherQry(fmt::format("INSERT INTO users(user_id, username, name) "
-                                   "VALUES({}, {}, {});",
+                                   "VALUES({}, '{}', '{}');",
                                    user_id, username.toStdString(), name.toStdString()).c_str());
 }
 
@@ -286,6 +308,37 @@ bool DataBase::envExists(const quint64 &env_id) const
     QVector<InfoContainer> arr;
     this->SELECT(arr, fmt::format("SELECT * FROM chat_envs WHERE env_id={}", (uint64_t)env_id).c_str());
     return arr.isEmpty();
+}
+
+bool DataBase::isValidPrivateChat(const quint64 &env_id) const
+{
+    InfoContainer result;
+    this->singleSELECT(result, fmt::format("SELECT * FROM private_chats "
+                                           "WHERE env_id={};", env_id).c_str());
+    return !result.isEmpty();
+}
+
+bool DataBase::isPendingPrivateChat(const quint64 &env_id) const
+{
+    InfoContainer result;
+    this->singleSELECT(result, fmt::format("SELECT * FROM pending_chat_envs "
+                                           "WHERE env_id={};", env_id).c_str());
+    return !result.isEmpty();
+}
+
+QString DataBase::getOtherAudienceNameInPrivateChat(const quint64 &private_env_id,
+                                                    const bool& is_pending) const
+{
+    using namespace KeyWords;
+    InfoContainer result;
+    if(is_pending)
+        this->getPendingPrivateChatInfoByEnvId(private_env_id, result);
+    else
+        this->getValidPrivateChatInfoByEnvId(private_env_id, result);
+
+    return result[FIRST_PERSON].toUInt() == this->m_user_info[USER_ID].toUInt() ?
+            this->getNameOfUser(result[SECOND_PERSON].toUInt()) :
+            this->getNameOfUser(result[FIRST_PERSON].toUInt());
 }
 
 // private

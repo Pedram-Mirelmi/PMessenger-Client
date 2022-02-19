@@ -5,15 +5,8 @@ import QtQuick.Layouts 2.14
 Rectangle
 {
     id: chatComp
-    property int contact_id: -1
-    property string contact_name: ""
-    property string contact_username: ""
-    property int env_id: -1
-    signal newChatMsgSent(string msg_text, int env_id)
-
     ColumnLayout
     {
-        id: layouttt
         anchors.fill: parent
         Rectangle
         {
@@ -27,7 +20,7 @@ Rectangle
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.left: parent.left
                 anchors.leftMargin: 5
-                text: chatComp.contact_name
+//                text: chatsModel.currChatTitle
             }
         }
 

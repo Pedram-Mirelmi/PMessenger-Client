@@ -30,6 +30,13 @@ constexpr auto ENV_ID = "env_id";
 constexpr auto OWNER_ID = "owner_id";
 constexpr auto MESSAGE_ID = "message_id";
 constexpr auto PHOTO_ID = "photo_id";
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+constexpr auto TITLE = "title";
+
+
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
@@ -79,9 +86,9 @@ constexpr auto CHANNELS = "channels";
 /*
     GET_PRIVATE_ENV_DETAILS when client requests for messages in a private_env with id of "env_id"
     request:    {MESSAGE_TYPE: GET_PRIVATE_ENV_DETAILS, ENV_ID: ...}
-    response:   {NET_MESSAGE_TYPE: DATA, DATA_TYPE: ENV_DETAILS, ENV_MESSAGES:[TEXT_MESSAGES: [], ... ], ENV_INFO: {}}
+    response:   {NET_MESSAGE_TYPE: DATA, DATA_TYPE: ENV_DETAILS, TEXT_MESSAGES: [...], ... , ENV_INFO: {...}}
 */
-constexpr auto GET_PRIVATE_ENV_DETAILS = "get_private_env_details";
+constexpr auto GET_ENV_DETAILS = "get_private_env_details";
 constexpr auto ENV_DETAILS = "env_details";
 constexpr auto ENV_MESSAGES = "env_messages";
 constexpr auto ENV_INFO = "env_info";

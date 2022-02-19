@@ -2,17 +2,15 @@ import QtQuick 2.12
 import QtQuick.Controls 2.14
 import QtQuick.Window 2.14
 import QtQuick.Layouts 1.14
-
 import "../Dialogs/"
 
 Rectangle
 {
-    id: contactsComp
+    id: chatsComp
     SplitView.preferredWidth: 150
     SplitView.minimumWidth: 150
     SplitView.maximumWidth: 400
     color: "lightblue"
-    signal openNewChatdialog()
     Rectangle
     {
         id: contactsHeader
@@ -29,18 +27,8 @@ Rectangle
                 Layout.fillHeight: true
                 verticalAlignment: Qt.AlignVCenter
                 Layout.leftMargin: 10
-                text: "M-Messenger"
+                text: "P-Messenger"
             }
-
-//            Button
-//            {
-//                Label
-//                {
-//                    text: "test"
-//                }
-//                onClicked: mainApp.test()
-//                onDoubleClicked: mainApp.test2()
-//            }
 
             ToolButton
             {
@@ -69,7 +57,7 @@ Rectangle
 
     ListView
     {
-        id: contactsList
+        id: conversationsView
         anchors.top: contactsHeader.bottom
         width: parent.width
         clip: true
@@ -79,33 +67,38 @@ Rectangle
 
         delegate: Component
         {
-            Frame
+            Rectangle
             {
                 width: parent.width
                 height: 50
+//                anchors.fill: parent
+                color: chatsModel.currChatIndex === model.index ? "steelblue" : "white"
                 MouseArea
                 {
                     anchors.fill: parent
                     onClicked:
                     {
-                        console.log("clicked on", model.name)
+                        console.log("clicked on " + model.title)
+                        dataHolder.openExistingChatEnv(model.env_id, model.is_pending)
+                        chatsModel.currChatIndex = model.index
                     }
                 }
 
                 Label
                 {
                     id: contactLabelId
-                    text: model.name
-                    font.pointSize: 15
+                    text: model.title
+                    font.pointSize: 20
                 }
-                Label
-                {
-                    id: lastMessgeId
-                    text: "some message ..."
-                    font.pixelSize: 10
-                    anchors.top: contactLabelId.bottom
-                    anchors.topMargin: 5
-                }
+                //                Label
+                //                {
+                //                    id: lastMessgeId
+                //                    text: "some message ..."
+                //                    font.pixelSize: 10
+                //                    anchors.top: contactLabelId.bottom
+                //                    anchors.topMargin: 5
+                //                }
+
             }
         }
     }

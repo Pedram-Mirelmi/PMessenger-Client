@@ -21,7 +21,7 @@ class NetworkHandler : public QObject
     NetMessageReceiver* m_receiver;
 public:
     NetMessageSender* m_sender;
-    Q_PROPERTY(bool net_connected READ netConnected NOTIFY netConnectedChanged);
+    Q_PROPERTY(bool netConnected READ netConnected NOTIFY netConnectedChanged);
 signals:
     void netConnectedChanged(bool connection_status);
 public:
@@ -36,6 +36,8 @@ public:
     Q_INVOKABLE void sendRegisterReq(const QString& username, const QString& password);
     Q_INVOKABLE void sendLoginReq(const QString& username, const QString& password);
     Q_INVOKABLE void sendUsernameSearchReq(const QString& username);
+//    Q_INVOKABLE QString getLastMessageText(const quint64& env_id,
+//                                           const bool& is_pending);
 
     void sendFetchReq();
 
@@ -45,7 +47,7 @@ public:
                                const QString& message_text,
                                const quint64& invalid_id);
 
-    void sendPrivateEnvDetailsReq(const quint64& env_id);
+    void sendEnvDetailsReq(const quint64& env_id);
 
 public slots:
     void connectToServer();

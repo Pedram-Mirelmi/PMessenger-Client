@@ -23,8 +23,7 @@ Item
 
         ChatsList
         {
-            id: chatsList
-            onOpenNewChatdialog: newChatDialog.open()
+            id: chatsComp
         }
 
         MessagesList

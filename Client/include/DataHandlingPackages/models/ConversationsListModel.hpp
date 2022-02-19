@@ -8,13 +8,13 @@ class DataHandler;
 struct ConversatonItem
 {
     ConversatonItem(const quint64& env, const bool& pending,
-                    const QString& name, const quint64& msg_id)
+                    const QString& titlee, const quint64& msg_id)
         : env_id(env), is_pending(pending),
-          contact_name(name), last_message_id(msg_id)
+          title(titlee), last_message_id(msg_id)
     {};
     quint64 env_id;
     bool is_pending;
-    QString contact_name;
+    QString title;
     quint64 last_message_id;
 };
 
@@ -22,23 +22,43 @@ struct ConversatonItem
 class ConversationsListModel : public QAbstractListModel
 {
     Q_OBJECT
-    friend class DataHandler;
-public:
-    explicit ConversationsListModel(QObject *parent = nullptr);
+    Q_PROPERTY(quint16 currChatIndex READ currChatIndex WRITE setCurrChatIndex NOTIFY currChatIndexChanged)
+    Q_PROPERTY(QString currChatTitle READ currChatTitle WRITE setCurrChatTitle NOTIFY currChatTitleChanged)
+    quint16 m_current_chat_index = 0;
+
+    QVector<ConversatonItem> m_conversations;
 
     enum Roles
     {
         env_id = Qt::UserRole,
-        name,
         is_pending,
+        title,
         last_message_id
     };
 
+    friend class DataHandler;
+
+public:
+    explicit ConversationsListModel(QObject *parent = nullptr);
+
+    quint16 currChatIndex() const;
+
+    QString currChatTitle() const;
+
+    void setCurrChatIndex(const quint16& index);
+
+    void setCurrChatTitle(const QString& new_title);
+
+    void selectChat(const quint64& env_id,
+                    const bool& is_pending);
+
+public:
+
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
 
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+    QVariant data(const QModelIndex &index,
+                  int role = Qt::DisplayRole) const override;
 
-    // Editable:
     bool setData(const QModelIndex &index, const QVariant &value,
                  int role = Qt::EditRole) override;
 
@@ -48,7 +68,7 @@ public:
 
     void sortConversatoins(); // insertion sort
 
-    void tryToAppendConversation(const ConversatonItem& conversation);
+    void appendConversation(const ConversatonItem& conversation);
 
     void tryToInsertConversation(const ConversatonItem& conversation);
 
@@ -57,13 +77,12 @@ public:
 private slots:
     void popUpConversation(const QJsonObject& new_inserted_msg);
 private:
-    QVector<ConversatonItem> m_conversations;
-    void swapItems(const quint64 &first, const quint64 &second);
 
-    quint16 getConversationIndex(const quint32& l,
-                                 const quint32& r,
-                                 const quint64& env_id);
+    void swapItems(const quint64 &first, const quint64 &second);
 
     quint16 searchFromTop(const quint64& env_id,
                           const bool& is_pending);
+signals:
+    void currChatIndexChanged(const quint16& index);
+    void currChatTitleChanged(const QString& new_title);
 };

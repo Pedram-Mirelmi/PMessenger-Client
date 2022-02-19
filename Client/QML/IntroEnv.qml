@@ -60,7 +60,6 @@ Item
                 onClicked:
                 {
                     netConn.sendRegisterReq(usernameField.text, passwordField.text);
-//                    console.log(net.net_connected)
                 }
             }
         }
@@ -73,7 +72,7 @@ Item
         {
             id: icon
             anchors.fill: parent
-            source: netConn.net_connected ? "qrc:/images/connected.png" : "qrc:/images/disconnected.png"
+            source: netConn.netConnected ? "qrc:/images/connected.png" : "qrc:/images/disconnected.png"
         }
     }
 }

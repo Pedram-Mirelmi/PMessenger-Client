@@ -9,7 +9,6 @@
 #include <QDir>
 #include <QFile>
 #include <QObject>
-//#include <fmt/format.h>
 #include "../Others/stringTools.hpp"
 #include "../Others/TypeDefs.hpp"
 #include <QSqlError>
@@ -22,7 +21,6 @@ class MainApp;
 class DataBase : public QObject
 {
     Q_OBJECT
-
     QSqlDatabase db;
     InfoContainer& m_user_info;
     friend class DataHandler;
@@ -31,13 +29,15 @@ class DataBase : public QObject
 public:
     DataBase(QObject* parent, InfoContainer& user_info);
 
+
+    Q_INVOKABLE void tryToInsertUser(const quint64 &user_id,
+                                     const QString &username,
+                                     const QString &name);
+
     bool tryToInit();
 
     void tryToInsertPrivateEnvs(const QJsonValueRef& envs);
 
-    void tryToInsertUser(const quint64 &user_id,
-                         const QString &username,
-                         const QString &name);
 
     void deletePendingChat(const quint64& invalid_id);
 
@@ -55,13 +55,24 @@ public:
 
 
 
-    bool privateChatAlreadyExists(const quint64& user_id) const;
+    bool validPrivateChatAlreadyExists(const quint64& user_id,
+                                       InfoContainer& chat_info) const;
 
-    void getPendingPrivateChatInfo(const quint64& user_id,
-                                   InfoContainer& chat_info) const;
+    bool pendingPrivateChatAlreadyExists(const quint64& user_id,
+                                         InfoContainer& chat_info) const;
 
-    void getPrivateChatInfo(const quint64& user_id,
-                            InfoContainer& chat_info) const;
+    void getPendingPrivateChatInfoByOtherUser(const quint64& user_id,
+                                              InfoContainer& chat_info) const;
+
+    void getPendingPrivateChatInfoByEnvId(const quint64& invalid_env_id,
+                                          InfoContainer& chat_info) const;
+
+
+    void getValidPrivateChatInfoByOtherUser(const quint64& user_id,
+                                            InfoContainer& chat_info) const;
+
+    void getValidPrivateChatInfoByEnvId(const quint64& env_id,
+                                        InfoContainer& chat_info) const;
 
     void getEnvTextMessages(const quint64& env_id,
                             QVector<InfoContainer>& messages,
@@ -71,9 +82,9 @@ public:
 
     void getAllPendingEnvs(QVector<InfoContainer>& envs);
 
-    QString getNameOfUser(const quint64& user_id);
+    QString getNameOfUser(const quint64& user_id) const;
 
-    quint64 getLastEnvMessageId(const quint64 env_id);
+    quint64 getLastEnvMessageId(const quint64 env_id) const;
 
 private:
     static void convertToHash(InfoContainer &target,
@@ -96,6 +107,13 @@ private:
     QJsonArray convertToNormalForm(const QJsonArray& data) const;
 
     bool envExists(const quint64& env_id) const;
+
+    bool isValidPrivateChat(const quint64& env_id) const;
+
+    bool isPendingPrivateChat(const quint64& env_id) const;
+
+    QString getOtherAudienceNameInPrivateChat(const quint64& private_env_id,
+                                              const bool& is_pending) const;
 
     quint64 getLastInsertId() const;
 
