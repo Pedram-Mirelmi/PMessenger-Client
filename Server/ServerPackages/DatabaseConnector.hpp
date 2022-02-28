@@ -7,6 +7,9 @@
 #include "../../Commons/stringTools.hpp"
 #include "../../Commons/KeyWords.hpp"
 
+#ifndef DB_NUMERIC_TYPE 
+#define DB_NUMERIC_TYPE 20
+#endif
 
 typedef Json::Value msg_t;
 typedef unsigned long int id_T;
@@ -60,10 +63,16 @@ public:
             pqxx::nontransaction nontrans(this->m_db_connection);
             pqxx::result db_result(nontrans.exec(query));
             const pqxx::row& the_row = db_result[0];
-            
             this->setCurrentColumns(db_result, columns);
+
             for (unsigned int i = 0; i < db_result.columns(); i++)
-                result[columns[i]] = the_row[i].is_null() ? "" : the_row[i].as<std::string>();
+                if (!the_row[i].is_null())
+                    if(the_row[i].type() != DB_NUMERIC_TYPE)
+                        result[columns[i]] = the_row[i].c_str();
+                    else
+                        result[columns[i]] = (Json::Value::Int64)the_row[i].as<int64_t>();
+                else
+                    result[columns[i]] = Json::nullValue;                
             return true;
         }
         catch(const std::exception& e)
@@ -74,7 +83,9 @@ public:
         
     };
  
-    bool SELECT(const std::string& query, JsonArr& result)
+    bool SELECT(const std::string& query,
+                JsonArr& result,
+                const bool& header = true)
     {
         std::vector<const char*> columns;
         try
@@ -82,11 +93,21 @@ public:
             pqxx::nontransaction nontrans(this->m_db_connection);
             pqxx::result db_result(nontrans.exec(query));
             this->setCurrentColumns(db_result, columns);
+            if(header)
+                for (const auto& column_name : columns)
+                    result[0].append(column_name);
+                    
             for (const auto& row : db_result)
             {
                 JsonObj new_record;
                 for (unsigned int i = 0; i < db_result.columns(); i++)
-                    new_record[columns[i]] = row[i].is_null() ? "" : row[i].as<std::string>();
+                    if (!row[i].is_null())
+                        if(row[i].type() != DB_NUMERIC_TYPE)
+                            new_record.append(row[i].c_str());
+                        else
+                            new_record.append((Json::Value::Int64)row[i].as<int64_t>());
+                    else
+                        new_record.append(Json::nullValue);
                 result.append(new_record);
             }
             return true;
@@ -151,6 +172,17 @@ public:
         return this->execTransactionQuery(query) ? this->getLastInsertId("users", "user_id") : 0;
     }
 
+    void setPrivateEnvsListThatUserAttends(JsonArr& envs_list,
+                                           const uint64_t& user_id) // ToDo
+    {
+        JsonArr envs;
+        auto privates_query = fmt::format("SELECT env_id from private_chats_view "
+                                          "WHERE first_person = {} OR second_person = {};",
+                                           user_id, user_id);
+        this->SELECT(privates_query, envs, false);
+        for (const auto& single_item_list : envs)
+            envs_list.append(single_item_list[0]);
+    }
 
 protected:  
     uint64_t getLastInsertId(const char* tablename, const char* id_field)

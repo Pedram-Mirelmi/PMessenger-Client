@@ -56,8 +56,12 @@ public:
         std::lock_guard<std::mutex> lock(send_lock);
         const auto message_string = this->m_Jwriter.write(message);
         std::cout << "sending: " << message_string << std::endl;
-        send(this->sock, (std::string(8 - std::ceil(log10((int)(message_string.length()))), ' ') + std::to_string(message_string.length())).data(), 8, 0);
-        send(this->sock, message_string.data(), message_string.size(), 0);
+        send(this->sock,
+                         (std::string(8 - std::ceil(log10((int)(message_string.length()))), ' ')
+                                      + std::to_string(message_string.length())).data(),
+                         8, MSG_NOSIGNAL);
+        if (send(this->sock, message_string.data(), message_string.size(), MSG_NOSIGNAL) == -1)
+            throw std::runtime_error("connection closed by client");
     }
 
 
@@ -71,22 +75,18 @@ private:
         return std::stoi(req_len_buff);
     };
 
-    static void convertToMap(const char* buff, msg_t& given_map)
-    {
-        std::stringstream stream(buff);
-        std::string key, value;
-        while (getline(stream, key, ' '))
-        {
-            getline(stream, value, '\t');
-            given_map[key] = value;
-        }
-    }
-
     void closeConnection()
     {
-        msg_t closing_msg;
-        closing_msg[KeyWords::NET_MESSAGE_TYPE] = KeyWords::CLOSE_CONNECTION;
-        this->sendMessage(closing_msg);
+        try
+        {
+            msg_t closing_msg;
+            closing_msg[KeyWords::NET_MESSAGE_TYPE] = KeyWords::CLOSE_CONNECTION;
+            this->sendMessage(closing_msg);
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << e.what() << '\n';
+        }
     }
 };
 

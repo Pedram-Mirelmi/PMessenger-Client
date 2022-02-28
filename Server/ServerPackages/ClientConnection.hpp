@@ -59,7 +59,7 @@ public:
             // std::thread(&ClientConnection::controlOnlineTime, this).detach();
             return this->user_id;
         }
-        catch (std::exception& e)
+        catch (std::exception &e)
         {
             std::cout << e.what() << std::endl;
             return INVALID_ID;
@@ -88,7 +88,7 @@ public:
 
             }
         }
-        catch (std::exception& e)
+        catch (std::exception &e)
         {
             std::cout << e.what() << std::endl;
         }

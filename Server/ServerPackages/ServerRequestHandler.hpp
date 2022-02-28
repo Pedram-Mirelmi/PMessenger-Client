@@ -42,7 +42,8 @@ public:
         if (net_msg_type == SEARCH_USERNAME)
         {
             this->handleSearchUsername(request, response);
-            response[NET_MESSAGE_TYPE] = SEARCH_USERNAME_RESULT;
+            response[NET_MESSAGE_TYPE] = DATA;
+            response[DATA_TYPE] = SEARCH_USERNAME_RESULT;
             return;
         }
         if (net_msg_type == NEW_TEXT_MESSAGE)
@@ -124,12 +125,8 @@ public:
     void handleFetch(JsonObj& request, JsonObj& response)
     {
         using namespace KeyWords;
-        auto privates_query = fmt::format("SELECT * from private_chats_view "
-                                          "WHERE first_person = {} OR second_person = {};",
-                                           this->m_user_id, this->m_user_id);
-        JsonObj privates;
-        std::cout << this->db.SELECT(privates_query, privates);
-        response[PRIVATE_CHATS] = privates;
+        this->db.setPrivateEnvsListThatUserAttends(response[PRIVATE_CHATS], this->m_user_id);
+        // Other chat env types like group later ...        
     }
 
     void handleGetEnvMessages(const JsonObj& request, JsonObj& response)
