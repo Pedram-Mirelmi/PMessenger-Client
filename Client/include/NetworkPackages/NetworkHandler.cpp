@@ -11,26 +11,26 @@ NetworkHandler::NetworkHandler(QObject *parent, const QString &address, quint16 
       m_receiver(new NetMessageReceiver(this, this->m_socket)),
       m_sender(new NetMessageSender(this, this->m_socket))
 {
-    connect(this->m_socket, &QTcpSocket::disconnected,
-            this->m_receiver, &NetMessageReceiver::stopListening, Qt::UniqueConnection);
+    QObject::connect(this->m_socket, &QTcpSocket::disconnected,
+                     this->m_receiver, &NetMessageReceiver::stopListening, Qt::UniqueConnection);
 
-    connect(this->m_socket, &QTcpSocket::connected,
-            this->m_receiver, &NetMessageReceiver::startListening, Qt::UniqueConnection);
+    QObject::connect(this->m_socket, &QTcpSocket::connected,
+                     this->m_receiver, &NetMessageReceiver::startListening, Qt::UniqueConnection);
 
-    connect(this->m_receiver, &NetMessageReceiver::newNetMessageArrived,
-            this, &NetworkHandler::handleNewNetMessage, Qt::UniqueConnection);
+    QObject::connect(this->m_receiver, &NetMessageReceiver::newNetMessageArrived,
+                     this, &NetworkHandler::handleNewNetMessage, Qt::UniqueConnection);
 
-    connect(this->m_socket, &QTcpSocket::connected, [=]()
-                {
-                      this->net_connected=true;
-                      emit this->netConnectedChanged(true);
-                }
+    QObject::connect(this->m_socket, &QTcpSocket::connected, [=]()
+    {
+        this->net_connected=true;
+        emit this->netConnectedChanged(true);
+    }
     );
-    connect(this->m_socket, &QTcpSocket::disconnected, [=]()
-                {
-                     this->net_connected=false;
-                     emit this->netConnectedChanged(false);
-                }
+    QObject::connect(this->m_socket, &QTcpSocket::disconnected, [=]()
+    {
+        this->net_connected=false;
+        emit this->netConnectedChanged(false);
+    }
     );
     this->setAutoConnect(true);
     this->connectToServer();
@@ -145,11 +145,6 @@ void NetworkHandler::handleNewNetMessage(const QJsonObject &net_msg)
         emit this->entryNetMessageArrived(net_msg);
         if (net_msg[SUCCESSFUL].toBool())
             emit this->entrySuccessful(net_msg);
-        return;
-    }
-    if (net_msg[NET_MESSAGE_TYPE] == SEARCH_USERNAME_RESULT)
-    {
-        emit this->searchUsernameResultArrived(net_msg[SEARCH_RESULT].toArray());
         return;
     }
     if (net_msg[NET_MESSAGE_TYPE] == DATA)

@@ -14,7 +14,7 @@ Dialog
     }
     Connections
     {
-        target: netConn
+        target: dataHolder
         function onSearchUsernameResultArrived(search_result)
         {
             for (let i = 0; i < search_result.length; i++)

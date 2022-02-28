@@ -58,6 +58,5 @@ signals:
     void entrySuccessful(const QJsonObject& msg);
     void newDataArrived(const QJsonObject& msg);
     void entryNetMessageArrived(const QJsonObject& msg);
-    void searchUsernameResultArrived(const QJsonArray& search_result);
     void newChatCreationMsgArrived(const QJsonObject& msg);
 };

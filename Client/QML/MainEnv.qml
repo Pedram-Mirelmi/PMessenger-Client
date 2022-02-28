@@ -24,6 +24,9 @@ Item
         ChatsList
         {
             id: chatsComp
+            SplitView.preferredWidth: 200
+            SplitView.minimumWidth: 150
+            SplitView.maximumWidth: 400
         }
 
         MessagesList

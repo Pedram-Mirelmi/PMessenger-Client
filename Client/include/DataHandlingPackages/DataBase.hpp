@@ -55,32 +55,33 @@ public:
 
 
 
-    bool validPrivateChatAlreadyExists(const quint64& user_id,
-                                       InfoContainer& chat_info) const;
+    bool setValidPrivateChatInfoIfExists(const quint64& user_id,
+                                    InfoContainer& user_info) const;
 
-    bool pendingPrivateChatAlreadyExists(const quint64& user_id,
-                                         InfoContainer& chat_info) const;
+    bool setInvalidPrivateChatInfoIfExists(const quint64& user_id,
+                                           InfoContainer& user_info) const;
 
-    void getPendingPrivateChatInfoByOtherUser(const quint64& user_id,
-                                              InfoContainer& chat_info) const;
+    std::shared_ptr<InfoContainer>
+    getPendingPrivateChatInfoByOtherUser(const quint64& user_id) const;
 
-    void getPendingPrivateChatInfoByEnvId(const quint64& invalid_env_id,
-                                          InfoContainer& chat_info) const;
+    std::shared_ptr<InfoContainer>
+    getPendingPrivateChatInfoByEnvId(const quint64& invalid_env_id) const;
 
+    std::shared_ptr<InfoContainer>
+    getValidPrivateChatInfoByOtherUser(const quint64& user_id) const;
 
-    void getValidPrivateChatInfoByOtherUser(const quint64& user_id,
-                                            InfoContainer& chat_info) const;
+    std::shared_ptr<InfoContainer>
+    getValidPrivateChatInfoByEnvId(const quint64& env_id) const;
 
-    void getValidPrivateChatInfoByEnvId(const quint64& env_id,
-                                        InfoContainer& chat_info) const;
+    std::shared_ptr<InfoCollection>
+    getEnvTextMessages(const quint64& env_id,
+                       const bool& pending_env) const;
 
-    void getEnvTextMessages(const quint64& env_id,
-                            QVector<InfoContainer>& messages,
-                            const bool& pending_env) const;
+    std::shared_ptr<InfoCollection>
+    getAllRegisteredEnvs();
 
-    void getAllRegisteredEnvs(QVector<InfoContainer>& envs);
-
-    void getAllPendingEnvs(QVector<InfoContainer>& envs);
+    std::shared_ptr<InfoCollection>
+    getAllPendingEnvs();
 
     QString getNameOfUser(const quint64& user_id) const;
 
@@ -96,15 +97,16 @@ private:
 
     bool createTables();
 
-    bool SELECT(QVector<InfoContainer>& result_set,
-                const char query_str[]) const;
+    std::shared_ptr<InfoCollection>
+    SELECT(const char query_str[]) const;
 
-    bool singleSELECT(InfoContainer& result,
-                      const char query_str[]) const;
+    std::shared_ptr<InfoContainer>
+    singleSELECT(const char query_str[]) const;
 
     bool execOtherQry(const char query_str[]);
 
-    QJsonArray convertToNormalForm(const QJsonArray& data) const;
+    static std::shared_ptr<QJsonArray>
+    convertToNormalForm(const QJsonArray& data);
 
     bool envExists(const quint64& env_id) const;
 

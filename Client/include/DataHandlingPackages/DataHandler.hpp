@@ -43,8 +43,8 @@ public:
                                         const bool& to_pending);
 
 
-    void createAndOpenNewPrivateChat(const quint64& user_id,
-                                     const QString& name);
+    quint64 createNewPrivateChat(const quint64& user_id,
+                                 const QString& name);
 
 public slots:
     void handleNewData(const QJsonObject& net_message);
@@ -83,6 +83,9 @@ private:
 
 private:
     void convertToHash(InfoContainer& target, const QJsonObject& source);
+signals:
+    void searchUsernameResultArrived(const QJsonArray& search_result);
+
 };
 
 

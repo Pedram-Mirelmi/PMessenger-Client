@@ -7,9 +7,7 @@ import "../Dialogs/"
 Rectangle
 {
     id: chatsComp
-    SplitView.preferredWidth: 150
-    SplitView.minimumWidth: 150
-    SplitView.maximumWidth: 400
+
     color: "lightblue"
     Rectangle
     {
@@ -51,7 +49,6 @@ Rectangle
                 }
             }
         }
-
     }
 
 
@@ -64,15 +61,13 @@ Rectangle
         anchors.bottom: parent.bottom
         model: chatsModel
 
-
         delegate: Component
         {
             Rectangle
             {
                 width: parent.width
                 height: 50
-//                anchors.fill: parent
-                color: chatsModel.currChatIndex === model.index ? "steelblue" : "white"
+                color: chatsModel.currChatIndex === model.index ? "steelblue" : "lightblue"
                 MouseArea
                 {
                     anchors.fill: parent
@@ -90,14 +85,14 @@ Rectangle
                     text: model.title
                     font.pointSize: 20
                 }
-                //                Label
-                //                {
-                //                    id: lastMessgeId
-                //                    text: "some message ..."
-                //                    font.pixelSize: 10
-                //                    anchors.top: contactLabelId.bottom
-                //                    anchors.topMargin: 5
-                //                }
+                Label
+                {
+                    id: idSection
+                    text: model.username
+                    font.pixelSize: 10
+                    anchors.top: contactLabelId.bottom
+                    anchors.topMargin: 5
+                }
 
             }
         }

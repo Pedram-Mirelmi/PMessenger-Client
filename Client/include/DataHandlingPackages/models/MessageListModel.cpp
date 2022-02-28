@@ -7,10 +7,10 @@
 
 
 
-static QMutex insert_lock;
 
 MessageListModel::MessageListModel(QObject *parent)
-    : QAbstractListModel(parent)
+    : QAbstractListModel(parent),
+      m_messages(std::make_shared<InfoCollection>())
 {
 }
 
@@ -19,7 +19,7 @@ int MessageListModel::rowCount(const QModelIndex &parent) const
     if (parent.isValid())
         return 0;
 
-    return this->m_messages.size();
+    return this->m_messages->size();
 }
 
 QVariant MessageListModel::data(const QModelIndex &index, int role) const
@@ -31,15 +31,15 @@ QVariant MessageListModel::data(const QModelIndex &index, int role) const
     switch (role)
     {
     case message_id:
-        return this->m_messages[index.row()][MESSAGE_ID];
+        return this->m_messages->at(index.row())[MESSAGE_ID];
     case owner_id:
-        return this->m_messages[index.row()][OWNER_ID];
+        return this->m_messages->at(index.row())[OWNER_ID];
     case message_text:
-        return this->m_messages[index.row()][MESSAGE_TEXT];
+        return this->m_messages->at(index.row())[MESSAGE_TEXT];
 //    case created_at:
 //        return this->m_messages[row].created_at;
     case message_type:
-        return this->m_messages[index.row()][MESSAGE_TYPE];
+        return this->m_messages->at(index.row())[MESSAGE_TYPE];
     }
     return QVariant();
 }
@@ -52,10 +52,10 @@ bool MessageListModel::setData(const QModelIndex &index, const QVariant &value, 
         switch (role)
         {
         case message_id:
-            this->m_messages[index.row()][MESSAGE_ID] = value.toUInt();
+            this->m_messages->operator[](index.row())[MESSAGE_ID] = value.toUInt();
             break;
         case owner_id:
-            this->m_messages[index.row()][OWNER_ID] = value.toUInt();
+            this->m_messages->operator[](index.row())[OWNER_ID] = value.toUInt();
             break;
 //        case created_at:
 //            this->m_messages[row].created_at = value.toDateTime();
@@ -92,19 +92,17 @@ QHash<int, QByteArray> MessageListModel::roleNames() const
 void MessageListModel::insertMessage(const InfoContainer& msg)
 {
     using namespace KeyWords;
-    insert_lock.lock();
-    for (quint64 i = 0; i < (quint64)this->m_messages.size(); i++)
-        if (this->m_messages[i][MESSAGE_ID].toUInt() > msg[MESSAGE_ID].toUInt())
+    for (quint64 i = 0; i < (quint64)this->m_messages->size(); i++)
+        if (this->m_messages->at(i)[MESSAGE_ID].toUInt() > msg[MESSAGE_ID].toUInt())
         {
             this->beginInsertRows(QModelIndex(), i, i);
-            this->m_messages.insert(i, msg);
+            this->m_messages->insert(i, msg);
             this->endInsertRows();
             return;
         }
-    this->beginInsertRows(QModelIndex(), this->m_messages.size(), this->m_messages.size());
-    this->m_messages.append(msg);
+    this->beginInsertRows(QModelIndex(), this->m_messages->size(), this->m_messages->size());
+    this->m_messages->append(msg);
     this->endInsertRows();
-    insert_lock.unlock();
 }
 
 
@@ -134,10 +132,10 @@ void MessageListModel::clearModel()
 void MessageListModel::sortMessages() // insertion sort
 {
     using namespace KeyWords;
-    for (auto i = 0; i < this->m_messages.size() - 1; i++)
+    for (auto i = 0; i < this->m_messages->size() - 1; i++)
     {
         auto j = i + 1;
-        while (j >= 1 && this->m_messages[j - 1][MESSAGE_ID].toUInt() > this->m_messages[j][MESSAGE_ID].toUInt())
+        while (j >= 1 && this->m_messages->at(j - 1)[MESSAGE_ID].toUInt() > this->m_messages->at(j)[MESSAGE_ID].toUInt())
         {
             swapItems(j, j - 1);
             j--;
@@ -153,9 +151,7 @@ void MessageListModel::convertToHash(InfoContainer &target, const QJsonObject &s
 
 void MessageListModel::swapItems(const quint64 &first, const quint64 &second)
 {
-    auto temp = this->m_messages[first];
-    this->m_messages[first] = this->m_messages[second];
-    this->m_messages[second] = temp;
+    this->m_messages->swapItemsAt(first, second);
     emit this->dataChanged(this->index(first, 0), this->index(first, 0),
                            QVector<int>() << Roles::message_id << Roles::owner_id << Roles::message_type);
     emit this->dataChanged(this->index(second, 0), this->index(second, 0),

@@ -1,9 +1,7 @@
 ﻿#include "DataBase.hpp"
 #include "../../Commons/KeyWords.hpp"
-//#include <string>
-//#include <fmt/format.h>
 #include <QMutex>
-
+#include <memory>
 
 static char data_path[] = "/home/pedram/Desktop/PMessenger/Client/data/";
 static char database_filename[] = "db.sqlite";
@@ -13,8 +11,8 @@ QMutex insert_lock; // to get last_insert_rowid() thead safly
 
 DataBase::DataBase(QObject* parent, InfoContainer& user_info)
     :QObject(parent),
-     db(QSqlDatabase::addDatabase("QSQLITE")),
-     m_user_info(user_info)
+      db(QSqlDatabase::addDatabase("QSQLITE")),
+      m_user_info(user_info)
 {}
 
 
@@ -89,92 +87,104 @@ void DataBase::insertSinglePrivateEnv(const QJsonObject &env_info)
     this->execOtherQry(create_private_query.c_str());
 }
 
-bool DataBase::validPrivateChatAlreadyExists(const quint64 &user_id, InfoContainer& chat_info) const
+
+bool DataBase::setValidPrivateChatInfoIfExists(const quint64 &user_id,
+                                          InfoContainer& user_info) const
 {
-    this->getValidPrivateChatInfoByOtherUser(user_id, chat_info);
-    return !chat_info.isEmpty();
+
+    auto info = this->getValidPrivateChatInfoByOtherUser(user_id);
+    if (info->isEmpty())
+        return false;
+    user_info = *info;
+    return true;
 }
 
-bool DataBase::pendingPrivateChatAlreadyExists(const quint64 &user_id, InfoContainer& chat_info) const
+bool DataBase::setInvalidPrivateChatInfoIfExists(const quint64 &user_id,
+                                                 InfoContainer& user_info) const
 {
-    this->getPendingPrivateChatInfoByOtherUser(user_id, chat_info);
-    return !chat_info.isEmpty();
+    auto info = this->getPendingPrivateChatInfoByOtherUser(user_id);
+    if(info->isEmpty())
+        return false;
+    user_info = *info;
+    return true;
 }
 
-void DataBase::getPendingPrivateChatInfoByOtherUser(const quint64 &user_id,
-                                         InfoContainer &chat_info) const
+std::shared_ptr<InfoContainer>
+DataBase::getPendingPrivateChatInfoByOtherUser(const quint64 &user_id) const
 {
-    this->singleSELECT(chat_info, fmt::format("SELECT * FROM pending_chat_envs "
-                                              "WHERE first_person = {} OR second_person = {}",
-                                              user_id, user_id).c_str());
+    return this->singleSELECT(fmt::format("SELECT * FROM pending_chat_envs "
+                                          "WHERE first_person = {} OR second_person = {}",
+                                          user_id, user_id).c_str());
 }
 
-void DataBase::getPendingPrivateChatInfoByEnvId(const quint64 &invalid_env_id,
-                                                InfoContainer &chat_info) const
+std::shared_ptr<InfoContainer>
+DataBase::getPendingPrivateChatInfoByEnvId(const quint64 &invalid_env_id) const
 {
-    this->singleSELECT(chat_info, fmt::format("SELECT * FROM pending_chat_envs "
-                                              "WHERE invalid_env_id = {}",
-                                              invalid_env_id).c_str());
+    return this->singleSELECT(fmt::format("SELECT * FROM pending_chat_envs "
+                                          "WHERE invalid_env_id = {}",
+                                          invalid_env_id).c_str());
 }
 
-void DataBase::getValidPrivateChatInfoByOtherUser(const quint64 &user_id,
-                                  InfoContainer& chat_info) const
+std::shared_ptr<InfoContainer>
+DataBase::getValidPrivateChatInfoByOtherUser(const quint64 &user_id) const
 {
-    this->singleSELECT(chat_info, fmt::format("SELECT * FROM private_chats "
-                                              "WHERE first_person = {} OR second_person = {}",
-                                              user_id, user_id).c_str());
+    return this->singleSELECT(fmt::format("SELECT * FROM private_chats "
+                                          "WHERE first_person = {} OR second_person = {}",
+                                          user_id, user_id).c_str());
 }
 
-void DataBase::getValidPrivateChatInfoByEnvId(const quint64 &env_id,
-                                              InfoContainer &chat_info) const
+std::shared_ptr<InfoContainer>
+DataBase::getValidPrivateChatInfoByEnvId(const quint64 &env_id) const
 {
-    this->singleSELECT(chat_info, fmt::format("SELECT * FROM private_chats "
-                                              "WHERE env_id = {}",
-                                              env_id).c_str());
+    return this->singleSELECT(fmt::format("SELECT * FROM private_chats "
+                                          "WHERE env_id = {}",
+                                          env_id).c_str());
 }
 
-void DataBase::getEnvTextMessages(const quint64 &env_id,
-                                  QVector<InfoContainer> &messages,
-                                  const bool& pending_env) const
+std::shared_ptr<InfoCollection>
+DataBase::getEnvTextMessages(const quint64 &env_id,
+                             const bool& pending_env) const
 {
+    auto result = std::make_shared<InfoCollection>();
     if (pending_env)
     {
-        this->SELECT(messages, fmt::format("SELECT * FROM pending_messages "
-                                           "WHERE invalid_env_id = {};",
-                                            env_id).c_str());
-        return;
+        return this->SELECT(fmt::format("SELECT * FROM pending_messages "
+                                        "WHERE invalid_env_id = {};",
+                                        env_id).c_str());
     }
-    this->SELECT(messages, fmt::format("SELECT * FROM text_messages_view "
-                                       "WHERE env_id={};", env_id).c_str());
-    this->SELECT(messages, fmt::format("SELECT * FROM pending_messages "
-                                       "WHERE env_id={};", env_id).c_str());
+    auto valids = this->SELECT(fmt::format("SELECT * FROM text_messages_view "
+                                           "WHERE env_id={};", env_id).c_str());
+    auto invalids = this->SELECT(fmt::format("SELECT * FROM pending_messages "
+                                             "WHERE env_id={};", env_id).c_str());
+    valids->append(*invalids);
+    return valids;
 }
 
-void DataBase::getAllRegisteredEnvs(QVector<InfoContainer> &envs)
+std::shared_ptr<InfoCollection>
+DataBase::getAllRegisteredEnvs()
 {
-    this->SELECT(envs, "SELECT * FROM private_chats");
+    return this->SELECT("SELECT * FROM private_chats");
 }
 
-void DataBase::getAllPendingEnvs(QVector<InfoContainer> &envs)
+std::shared_ptr<InfoCollection>
+DataBase::getAllPendingEnvs()
 {
-    this->SELECT(envs, "SELECT * FROM pending_chat_envs");
+    return this->SELECT("SELECT * FROM pending_chat_envs");
 }
 
 QString DataBase::getNameOfUser(const quint64 &user_id) const
 {
-    InfoContainer user_info;
-    this->singleSELECT(user_info, fmt::format("SELECT name FROM users "
-                                              "WHERE user_id = {}", user_id).c_str());
-    return user_info[KeyWords::NAME].toString();
+    auto user_info = this->singleSELECT(fmt::format("SELECT name FROM users "
+                                                    "WHERE user_id = {}", user_id).c_str());
+    return user_info->value(KeyWords::NAME).toString();
 }
 
 quint64 DataBase::getLastEnvMessageId(const quint64 env_id) const
 {
-    InfoContainer info;
-    this->singleSELECT(info, fmt::format("SELECT MAX(message_id) AS id "
-                                         "FROM messages "
-                                         "WHERE env_id = {};", env_id).c_str());
-    return info["id"].toUInt();
+    auto info = this->singleSELECT(fmt::format("SELECT MAX(message_id) AS id "
+                                               "FROM messages "
+                                               "WHERE env_id = {};", env_id).c_str());
+    return info->value("id").toUInt();
 }
 
 
@@ -182,7 +192,7 @@ quint64 DataBase::getLastEnvMessageId(const quint64 env_id) const
 void DataBase::insertValidTextMessages(const QJsonArray &messages)
 {
     using namespace KeyWords;
-    for (const auto& message : this->convertToNormalForm(messages))
+    for (const auto& message : messages)
         this->insertValidTextMessage(message.toObject());
 }
 
@@ -191,15 +201,15 @@ quint16 DataBase::insertNewPendingPrivateChat(const quint64 &user_id)
     using namespace KeyWords;
     insert_lock.lock();
     this->execOtherQry(fmt::format("INSERT INTO pending_chat_envs(env_type, first_person, second_person) "
-                       "VALUES('private_chat', {}, {});", this->m_user_info[USER_ID].toUInt(), user_id).c_str());
+                                   "VALUES('private_chat', {}, {});", this->m_user_info[USER_ID].toUInt(), user_id).c_str());
     auto inserted_invalid_id = this->getLastInsertId();
     insert_lock.unlock();
     return inserted_invalid_id;
 }
 
 quint16 DataBase::insertPendingTextMessage(const quint16 &env_id,
-                                             const QString &message_text,
-                                             const bool& to_pending_env)
+                                           const QString &message_text,
+                                           const bool& to_pending_env)
 {
     insert_lock.lock();
     auto id_field = to_pending_env ? "invalid_env_id" : "env_id";
@@ -238,9 +248,9 @@ void DataBase::insertValidTextMessage(const QJsonObject& msg_info)
                 msg_info[ENV_ID].toInt(), msg_info[CREATED_AT].toString().toStdString());
     ok = this->execOtherQry(general_message_insert_query.c_str());
     auto text_message_insert_query = fmt::format(
-                    "INSERT INTO text_messages(message_id, message_text) "
-                    "VALUES ({},          '{}')",
-                    msg_info[MESSAGE_ID].toInt(), toRaw(msg_info[MESSAGE_TEXT].toString().toStdString()));
+                "INSERT INTO text_messages(message_id, message_text) "
+                "VALUES ({},          '{}')",
+                msg_info[MESSAGE_ID].toInt(), toRaw(msg_info[MESSAGE_TEXT].toString().toStdString()));
     ok = this->execOtherQry(text_message_insert_query.c_str()) && ok;
     if (msg_info.contains(SEEN) && !msg_info[SEEN].toBool() && ok)
         emit this->newTextMessageInserted(msg_info);
@@ -248,34 +258,35 @@ void DataBase::insertValidTextMessage(const QJsonObject& msg_info)
 }
 
 // private
-bool DataBase::SELECT(QVector<InfoContainer> &result_set,
-                      const char query_str[]) const
+std::shared_ptr<InfoCollection>
+DataBase::SELECT(const char query_str[]) const
 {
+    auto result = std::make_shared<InfoCollection>();
     QSqlQuery query(this->db);
-    bool ok = query.exec(query_str);
-    auto index = result_set.size();
-    result_set.reserve(result_set.size() + query.size());
+    query.exec(query_str);
+    quint8 columns_count = query.record().count();
+    result->reserve(query.size());
     while (query.next())
     {
-        result_set.emplace_back();
-        for (quint8 i = 0; i < query.record().count(); i++)
-            result_set[index][query.record().field(i).name()] = query.value(i);
-        index++;
+        InfoContainer new_row;
+        for (quint8 i = 0; i < columns_count; i++)
+            new_row[query.record().field(i).name()] = query.value(i);
+        result->push_back(new_row);
     }
-    return ok;
+    return result;
 }
 
 // private
-bool DataBase::singleSELECT(InfoContainer &result,
-                            const char query_str[]) const
+std::shared_ptr<InfoContainer>
+DataBase::singleSELECT(const char query_str[]) const
 {
+    auto result = std::make_shared<InfoContainer>();
     QSqlQuery query(this->db);
-    bool ok = query.exec(query_str);
-    result.clear();
+    query.exec(query_str);
     if (query.next())
         for (quint8 i = 0; i < query.record().count(); i++)
-            result[query.record().field(i).name()] = query.value(i).toString();
-    return ok;
+            result->insert(query.record().field(i).name(), query.value(i).toString());
+    return result;
 }
 
 // private
@@ -285,76 +296,72 @@ bool DataBase::execOtherQry(const char query_str[])
     return query.exec(query_str);
 }
 
-// private
-QJsonArray DataBase::convertToNormalForm(const QJsonArray &data) const
+
+std::shared_ptr<QJsonArray>
+DataBase::convertToNormalForm(const QJsonArray &data)
 {
-    QJsonArray result;
+    auto target = std::make_shared<QJsonArray> ();
     auto fields = data[0].toArray();
     for (auto itter = data.constBegin() + 1; itter < data.constEnd(); itter++)
     {
         QJsonObject new_row;
         const QJsonArray& data_row = itter->toArray();
-        for (uint8_t i = 0; i<fields.size(); i++)
-        {
+        for (uint8_t i = 0; i < fields.size(); i++)
             new_row[fields[i].toString()] = data_row[i];
-        }
+        target->append(new_row);
     }
-    return result;
-}
+    return target;
+};
 
 // private
 bool DataBase::envExists(const quint64 &env_id) const
 {
-    QVector<InfoContainer> arr;
-    this->SELECT(arr, fmt::format("SELECT * FROM chat_envs WHERE env_id={}", (uint64_t)env_id).c_str());
-    return arr.isEmpty();
+    return this->SELECT(fmt::format("SELECT * FROM chat_envs WHERE env_id={}",
+                                    (uint64_t)env_id).c_str()
+                        )->isEmpty();
 }
 
 bool DataBase::isValidPrivateChat(const quint64 &env_id) const
 {
-    InfoContainer result;
-    this->singleSELECT(result, fmt::format("SELECT * FROM private_chats "
-                                           "WHERE env_id={};", env_id).c_str());
-    return !result.isEmpty();
+    auto result = this->singleSELECT(fmt::format("SELECT * FROM private_chats "
+                                                 "WHERE env_id={};", env_id).c_str());
+    return !(result->isEmpty());
 }
 
 bool DataBase::isPendingPrivateChat(const quint64 &env_id) const
 {
-    InfoContainer result;
-    this->singleSELECT(result, fmt::format("SELECT * FROM pending_chat_envs "
-                                           "WHERE env_id={};", env_id).c_str());
-    return !result.isEmpty();
+    auto result = this->singleSELECT(fmt::format("SELECT * FROM pending_chat_envs "
+                                                 "WHERE env_id={};", env_id).c_str());
+    return !(result->isEmpty());
 }
 
 QString DataBase::getOtherAudienceNameInPrivateChat(const quint64 &private_env_id,
                                                     const bool& is_pending) const
 {
     using namespace KeyWords;
-    InfoContainer result;
+    std::shared_ptr<InfoContainer> user_info;
     if(is_pending)
-        this->getPendingPrivateChatInfoByEnvId(private_env_id, result);
+        user_info = this->getPendingPrivateChatInfoByEnvId(private_env_id);
     else
-        this->getValidPrivateChatInfoByEnvId(private_env_id, result);
+        user_info = this->getValidPrivateChatInfoByEnvId(private_env_id);
 
-    return result[FIRST_PERSON].toUInt() == this->m_user_info[USER_ID].toUInt() ?
-            this->getNameOfUser(result[SECOND_PERSON].toUInt()) :
-            this->getNameOfUser(result[FIRST_PERSON].toUInt());
+    return user_info->value(FIRST_PERSON).toUInt() == this->m_user_info[USER_ID].toUInt() ?
+                this->getNameOfUser(user_info->value(SECOND_PERSON).toUInt()) :
+                this->getNameOfUser(user_info->value(FIRST_PERSON).toUInt());
 }
 
 // private
 quint64 DataBase::getLastInsertId() const
 {
-    InfoContainer select_result;
-    this->singleSELECT(select_result, "SELECT last_insert_rowid() as id;");
-    return select_result["id"].toUInt();
+    return this->singleSELECT("SELECT last_insert_rowid() as id;")->value("id").toUInt();
 }
 
 // private
 quint64 DataBase::getMaxMessagesId() const
 {
-    InfoContainer select_result;
-    this->singleSELECT(select_result, "SELECT max(message_id) FROM messages as id;");
-    return select_result["id"].toUInt();
+    return this->singleSELECT("SELECT max(message_id) "
+                              "FROM messages as id;"
+                              )->value("id").toUInt();
 }
 
 // private

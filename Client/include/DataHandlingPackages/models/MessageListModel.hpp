@@ -45,7 +45,7 @@ public slots:
     void considerNewTextMessage(const QJsonObject& msg_info);
 
 private:
-    QVector<InfoContainer> m_messages;
+    std::shared_ptr<InfoCollection> m_messages;
 
     void clearModel();
 

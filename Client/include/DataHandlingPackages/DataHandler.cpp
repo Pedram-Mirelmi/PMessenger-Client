@@ -13,20 +13,20 @@ DataHandler::DataHandler(QObject *parent, NetworkHandler *netHandler, InfoContai
       m_message_list_model(new MessageListModel(this)),
       m_conversation_list_model(new ConversationsListModel(this))
 {
-    this->connect(this->m_db, &DataBase::needPrivateEnvDetails,
-                  this, &DataHandler::fetchEnvDetails);
-    this->connect(this->m_db, &DataBase::newTextMessageInserted,
-                  this->m_message_list_model, &MessageListModel::considerNewTextMessage);
-    this->connect(this->m_db, &DataBase::newTextMessageInserted,
-                  this->m_conversation_list_model, &ConversationsListModel::popUpConversation);
+    QObject::connect(this->m_db, &DataBase::needPrivateEnvDetails,
+                     this, &DataHandler::fetchEnvDetails);
+    QObject::connect(this->m_db, &DataBase::newTextMessageInserted,
+                     this->m_message_list_model, &MessageListModel::considerNewTextMessage);
+    QObject::connect(this->m_db, &DataBase::newTextMessageInserted,
+                     this->m_conversation_list_model, &ConversationsListModel::popUpConversation);
 }
 
 void DataHandler::feedEnvMessagesToMessagesModel(const quint64 &env_id,
                                                  const bool& is_pending_env)
 {
     this->m_message_list_model->beginResetModel();
-    this->m_message_list_model->m_messages.clear();
-    this->m_db->getEnvTextMessages(env_id, this->m_message_list_model->m_messages, is_pending_env);
+    this->m_message_list_model->m_messages->clear();
+    this->m_message_list_model->m_messages = this->m_db->getEnvTextMessages(env_id, is_pending_env);
     this->m_message_list_model->endResetModel();
 }
 
@@ -55,20 +55,19 @@ void DataHandler::openPrivateChatWith(const quint64 user_id, const QString& name
 {
     using namespace KeyWords;
     InfoContainer chat_info;
-    if(this->m_db->validPrivateChatAlreadyExists(user_id, chat_info))
+    if(this->m_db->setValidPrivateChatInfoIfExists(user_id, chat_info))
     {
         this->openExistingChatEnv(chat_info[ENV_ID].toUInt(), false);
         return;
     }
-    if(this->m_db->pendingPrivateChatAlreadyExists(user_id, chat_info))
+    if(this->m_db->setInvalidPrivateChatInfoIfExists(user_id, chat_info))
     {
         this->openExistingChatEnv(chat_info[INVALID_ENV_ID].toUInt(), true);
         return;
     }
     // else: new pending private chat needs to be created
-
-    this->createAndOpenNewPrivateChat(user_id, name);
-    return;
+    auto invalid_id = this->createNewPrivateChat(user_id, name);
+    this->openExistingChatEnv(invalid_id, true);
 }
 
 void DataHandler::openExistingChatEnv(const quint64 &env_id, const bool &is_pending)
@@ -85,7 +84,7 @@ void DataHandler::sendNewTextMessage(const quint64 &env_id,
     // ToDo
 }
 
-void DataHandler::createAndOpenNewPrivateChat(const quint64 &user_id, const QString &name)
+quint64 DataHandler::createNewPrivateChat(const quint64 &user_id, const QString &name)
 {
     auto invalid_id = this->m_db->insertNewPendingPrivateChat(user_id);
     this->m_net_handler->sendCreateNewPrivateChatReq(user_id, invalid_id);
@@ -96,8 +95,8 @@ void DataHandler::createAndOpenNewPrivateChat(const quint64 &user_id, const QStr
                     name,
                     this->m_db->getMaxMessagesId()
                 }
-    );
-    this->openExistingChatEnv(invalid_id, true);
+                );
+    return invalid_id;
 }
 
 
@@ -125,46 +124,51 @@ void DataHandler::handleNewData(const QJsonObject &net_message)
         if(net_message[ENV_INFO][ENV_TYPE] == PRIVATE_CHAT)
             this->validatePrivateChat(net_message[ENV_INFO].toObject());
     }
+    else if (data_type == SEARCH_USERNAME_RESULT)
+    {
+        auto search_results = this->m_db->convertToNormalForm(net_message[SEARCH_RESULT].toArray());
+        emit this->searchUsernameResultArrived(*search_results);
+    }
 }
 
 void DataHandler::fillConversationListModel()
 {
     using namespace KeyWords;
     this->m_conversation_list_model->beginResetModel();
-    QVector<InfoContainer> all_conversations;
-    this->m_db->getAllRegisteredEnvs(all_conversations);
-    auto number_of_registered_envs = all_conversations.size();
-    this->m_db->getAllPendingEnvs(all_conversations);
+    auto registereds = this->m_db->getAllRegisteredEnvs();
+    auto number_of_registered_envs = registereds->size();
+    auto pendings = this->m_db->getAllPendingEnvs();
     quint16 i = 0;
     auto& new_data = this->m_conversation_list_model->m_conversations;
-    new_data.reserve(all_conversations.size());
+    new_data.clear();
+    new_data.reserve(registereds->size() + pendings->size());
     for (; i < number_of_registered_envs; i++)
         new_data.emplace_back(
-            all_conversations[i][ENV_ID].toUInt(),
-            false,
-            ((all_conversations[i][FIRST_PERSON].toUInt() == this->m_user_info[USER_ID].toUInt()) ?
-                this->m_db->getNameOfUser(all_conversations[i][FIRST_PERSON].toUInt()) :
-                this->m_db->getNameOfUser(all_conversations[i][SECOND_PERSON].toUInt())),
-            this->m_db->getLastEnvMessageId(all_conversations[i][ENV_ID].toUInt())
-         );
-    for (; i < all_conversations.size(); i++)
+                    pendings->value(i)[ENV_ID].toUInt(),
+                    false,
+                    ((registereds->value(i)[FIRST_PERSON].toUInt() == this->m_user_info[USER_ID].toUInt()) ?
+                         this->m_db->getNameOfUser(registereds->value(i)[FIRST_PERSON].toUInt()) :
+                         this->m_db->getNameOfUser(registereds->value(i)[SECOND_PERSON].toUInt())),
+                    this->m_db->getLastEnvMessageId(registereds->value(i)[ENV_ID].toUInt())
+                    );
+    for (; i < new_data.capacity(); i++)
         new_data.emplace_back(
-            all_conversations[i][INVALID_ENV_ID].toUInt(),
-            true,
-            (all_conversations[i][FIRST_PERSON].toUInt() == this->m_user_info[USER_ID].toUInt()) ?
-                this->m_db->getNameOfUser(all_conversations[i][FIRST_PERSON].toUInt()) :
-                this->m_db->getNameOfUser(all_conversations[i][SECOND_PERSON].toUInt()),
-            this->m_db->getMaxMessagesId()
-         );
+                    pendings->value(i)[INVALID_ENV_ID].toUInt(),
+                    true,
+                    (pendings->value(i)[FIRST_PERSON].toUInt() == this->m_user_info[USER_ID].toUInt()) ?
+                        this->m_db->getNameOfUser(pendings->value(i)[FIRST_PERSON].toUInt()) :
+                        this->m_db->getNameOfUser(pendings->value(i)[SECOND_PERSON].toUInt()),
+                    this->m_db->getMaxMessagesId()
+                    );
     this->m_conversation_list_model->endResetModel();
 }
 
 void DataHandler::registerAllPendingChats()
 {
     using namespace KeyWords;
-    QVector<InfoContainer> envs_infos;
-    this->m_db->getAllPendingEnvs(envs_infos);
-    for(const auto& env_info : envs_infos)
+
+    auto pendings = this->m_db->getAllPendingEnvs();
+    for(const auto& env_info : (*pendings))
     {
         if(env_info[ENV_TYPE].toString() == PRIVATE_CHAT)
         {
