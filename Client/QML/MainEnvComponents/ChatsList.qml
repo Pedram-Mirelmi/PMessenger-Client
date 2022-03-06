@@ -74,7 +74,7 @@ Rectangle
                     onClicked:
                     {
                         console.log("clicked on " + model.title)
-                        dataHolder.openExistingChatEnv(model.env_id, model.is_pending)
+                        mainApp.openExistingChatEnv(model.env_id, model.is_pending)
                         chatsModel.currChatIndex = model.index
                     }
                 }
@@ -85,14 +85,14 @@ Rectangle
                     text: model.title
                     font.pointSize: 20
                 }
-                Label
-                {
-                    id: idSection
-                    text: model.username
-                    font.pixelSize: 10
-                    anchors.top: contactLabelId.bottom
-                    anchors.topMargin: 5
-                }
+//                Label
+//                {
+//                    id: idSection
+//                    text: model.username
+//                    font.pixelSize: 10
+//                    anchors.top: contactLabelId.bottom
+//                    anchors.topMargin: 5
+//                }
 
             }
         }

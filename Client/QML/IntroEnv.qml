@@ -51,6 +51,8 @@ Item
                 onClicked:
                 {
                     netConn.sendLoginReq(usernameField.text, passwordField.text);
+//                    netConn.test();
+
                 }
             }
             Button
@@ -60,6 +62,7 @@ Item
                 onClicked:
                 {
                     netConn.sendRegisterReq(usernameField.text, passwordField.text);
+//                    netConn.connectToServer();
                 }
             }
         }
