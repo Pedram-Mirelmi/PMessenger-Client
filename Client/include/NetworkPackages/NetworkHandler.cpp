@@ -2,9 +2,13 @@
 #include <QJsonArray>
 #include <QJsonValue>
 #include <QJsonObject>
+#include <QThread>
+
 // constructor
-NetworkHandler::NetworkHandler(QObject *parent, const QString &address, quint16 port)
-    :   QObject(parent),
+NetworkHandler::NetworkHandler(QObject *parent,
+                               const QString &address,
+                               quint16 port)
+    : QObject(parent),
       m_socket(new QTcpSocket),
       m_address(address),
       m_port(port),
@@ -20,37 +24,41 @@ NetworkHandler::NetworkHandler(QObject *parent, const QString &address, quint16 
     QObject::connect(this->m_receiver, &NetMessageReceiver::newNetMessageArrived,
                      this, &NetworkHandler::handleNewNetMessage, Qt::UniqueConnection);
 
-    QObject::connect(this->m_socket, &QTcpSocket::connected, [=]()
-    {
-        this->net_connected=true;
-        emit this->netConnectedChanged(true);
-    }
+    QObject::connect(this->m_socket, &QTcpSocket::stateChanged,
+                        [&](const QTcpSocket::SocketState& new_state)
+                        {
+                            qDebug() << new_state;
+                            switch (new_state)
+                            {
+                                case QTcpSocket::ConnectedState:
+                                    emit this->netConnectedChanged(true); break;
+                                case QTcpSocket::ClosingState:
+                                    emit this->netConnectedChanged(false); break;
+                                default: break;
+                            };
+                        }
     );
-    QObject::connect(this->m_socket, &QTcpSocket::disconnected, [=]()
-    {
-        this->net_connected=false;
-        emit this->netConnectedChanged(false);
-    }
-    );
-    this->setAutoConnect(true);
+
     this->connectToServer();
 }
 
-// public:
-void NetworkHandler::setAutoConnect(bool enable)
+void NetworkHandler::autoConnect(bool connected_now)
 {
-    if(enable)
-        connect(this->m_socket, &QTcpSocket::disconnected,
-                this, &NetworkHandler::connectToServer, Qt::UniqueConnection);
-    else
-        disconnect(this->m_socket, &QTcpSocket::disconnected,
-                   this, &NetworkHandler::connectToServer);
+    if(!connected_now)
+        while (this->m_socket->state() != QTcpSocket::ConnectedState)
+        {
+            qDebug() << "hereeee " << this->m_socket->state();
+            QThread::usleep(500000);
+
+                                this->connectToServer();
+        }
 }
+
 
 // public
 bool NetworkHandler::netConnected()
 {
-    return this->net_connected;
+    return this->m_socket->state() == QAbstractSocket::ConnectedState;
 }
 
 
@@ -83,6 +91,12 @@ void NetworkHandler::sendUsernameSearchReq(const QString &username)
     net_msg[NET_MESSAGE_TYPE] = SEARCH_USERNAME;
     net_msg[USERNAME_TO_SEARCH] = username;
     this->m_sender->sendNetMessage(net_msg);
+}
+
+void NetworkHandler::test()
+{
+    qDebug() << this->m_socket->state();
+    QThread::sleep(10);
 }
 
 // Q_INVOKSBLE
@@ -153,18 +167,5 @@ void NetworkHandler::handleNewNetMessage(const QJsonObject &net_msg)
         return;
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

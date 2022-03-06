@@ -20,6 +20,16 @@ public:
                       const QString& address = "127.0.0.1",
                       const quint16 port = 54000);
 
+    Q_INVOKABLE void openPrivateChatWith(const quint64 user_id,
+                                         const QString& name);
+
+    Q_INVOKABLE void openExistingChatEnv(const quint64& env_id,
+                                         const bool& is_pending);
+
+    Q_INVOKABLE void sendNewTextMessage(const quint64& env_id,
+                                        const QString& message_text,
+                                        const bool& to_pending);
+
 private:
     InfoContainer m_user_info;
 

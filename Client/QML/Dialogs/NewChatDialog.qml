@@ -120,7 +120,7 @@ Dialog
                                 {
                                     console.log("clicked on " + model.name)
                                     db.tryToInsertUser(model.user_id, model.username, model.name)
-                                    dataHolder.openPrivateChatWith(model.user_id, model.name)
+                                    mainApp.openPrivateChatWith(model.user_id, model.name)
                                     newChatDialog.close()
                                 }
                             }
