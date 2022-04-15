@@ -6,9 +6,10 @@ MainApp::MainApp(QQmlApplicationEngine& qml_engine,
                  const QString &address,
                  const quint16 port)
     : QObject(parent),
-      m_network_handler(new NetworkHandler(this, address, port)),
-      m_data_handler(new DataHandler(this, this->m_network_handler, this->m_user_info))
+      m_network_handler(new NetworkHandler(nullptr, address, port)),
+      m_data_handler(new DataHandler(nullptr, this->m_network_handler, this->m_user_info))
 {
+
     QObject::connect(this->m_network_handler, &NetworkHandler::newDataArrived,
                      this->m_data_handler, &DataHandler::handleNewData, Qt::UniqueConnection);
 

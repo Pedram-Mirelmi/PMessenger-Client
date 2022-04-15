@@ -6,6 +6,7 @@
 #include <string>
 #include <cmath>
 #include <QObject>
+#include <QTimer>
 #include "../NetworkPackages/NetReceiver.hpp"
 #include "../NetworkPackages/NetSender.hpp"
 
@@ -20,9 +21,9 @@ class NetworkHandler : public QObject
     const QHostAddress m_address;
     quint16 m_port;
     NetMessageReceiver* m_receiver;
-
-public:
     NetMessageSender* m_sender;
+    QThread* m_network_thread;
+public:
     Q_PROPERTY(bool netConnected READ netConnected NOTIFY netConnectedChanged);
 signals:
     void netConnectedChanged(bool connection_status);
@@ -30,8 +31,6 @@ public:
     explicit NetworkHandler(QObject* parent,
                             const QString& address = "127.0.0.1",
                             quint16 port = 54000);
-
-    void autoConnect(bool connected_now);
 
     bool netConnected ();
 

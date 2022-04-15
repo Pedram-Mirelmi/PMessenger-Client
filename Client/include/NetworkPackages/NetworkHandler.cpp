@@ -3,18 +3,23 @@
 #include <QJsonValue>
 #include <QJsonObject>
 #include <QThread>
+#include <future>
 
 // constructor
 NetworkHandler::NetworkHandler(QObject *parent,
                                const QString &address,
                                quint16 port)
     : QObject(parent),
-      m_socket(new QTcpSocket),
+      m_socket(new QTcpSocket(this)),
       m_address(address),
       m_port(port),
-      m_receiver(new NetMessageReceiver(this, this->m_socket)),
-      m_sender(new NetMessageSender(this, this->m_socket))
+      m_receiver(new NetMessageReceiver(nullptr, this->m_socket)),
+      m_sender(new NetMessageSender(nullptr, this->m_socket)),
+      m_network_thread(new QThread(this))
 {
+    this->m_receiver->moveToThread(this->m_network_thread);
+    this->m_sender->moveToThread(this->m_network_thread);
+
     QObject::connect(this->m_socket, &QTcpSocket::disconnected,
                      this->m_receiver, &NetMessageReceiver::stopListening, Qt::UniqueConnection);
 
@@ -25,33 +30,22 @@ NetworkHandler::NetworkHandler(QObject *parent,
                      this, &NetworkHandler::handleNewNetMessage, Qt::UniqueConnection);
 
     QObject::connect(this->m_socket, &QTcpSocket::stateChanged,
-                        [&](const QTcpSocket::SocketState& new_state)
-                        {
-                            qDebug() << new_state;
-                            switch (new_state)
-                            {
-                                case QTcpSocket::ConnectedState:
-                                    emit this->netConnectedChanged(true); break;
-                                case QTcpSocket::ClosingState:
-                                    emit this->netConnectedChanged(false); break;
-                                default: break;
-                            };
-                        }
+                     [&](const QTcpSocket::SocketState& new_state)
+                     {
+                         static unsigned long tries_count = 0;
+                         qDebug() << new_state;
+                         if(new_state == QTcpSocket::SocketState::ConnectedState)
+                             emit this->netConnectedChanged(true);
+                         else if(new_state == QTcpSocket::SocketState::UnconnectedState)
+                         {
+                             emit this->netConnectedChanged(false);
+                             qDebug() << "not connected... trying ..." << tries_count++;
+                             QTimer::singleShot(500, this, &NetworkHandler::connectToServer);
+                         }
+                     }
     );
 
     this->connectToServer();
-}
-
-void NetworkHandler::autoConnect(bool connected_now)
-{
-    if(!connected_now)
-        while (this->m_socket->state() != QTcpSocket::ConnectedState)
-        {
-            qDebug() << "hereeee " << this->m_socket->state();
-            QThread::usleep(500000);
-
-                                this->connectToServer();
-        }
 }
 
 
@@ -167,5 +161,3 @@ void NetworkHandler::handleNewNetMessage(const QJsonObject &net_msg)
         return;
     }
 }
-
-

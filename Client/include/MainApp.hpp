@@ -1,6 +1,6 @@
 #pragma once
 #include <QObject>
-#include <thread>
+#include <QThread>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QJsonObject>
