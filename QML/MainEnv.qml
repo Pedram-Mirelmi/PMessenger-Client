@@ -7,11 +7,10 @@ import "MainEnvComponents/"
 //import "MainEnvComponents/MessagesList.qml"
 import "Dialogs/"
 
-Item
+Rectangle
 {
-    anchors.fill: parent
     property int user_id: -1
-
+    color: "red"
     NewChatDialog
     {
         id: newChatDialog
@@ -20,12 +19,11 @@ Item
     SplitView
     {
         anchors.fill: parent
-
-        ChatsList
+        ConversationsList
         {
             id: chatsComp
-            SplitView.preferredWidth: 200
-            SplitView.minimumWidth: 150
+            SplitView.preferredWidth: 250
+            SplitView.minimumWidth: 200
             SplitView.maximumWidth: 400
         }
 

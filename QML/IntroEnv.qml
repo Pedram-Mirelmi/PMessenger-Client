@@ -1,73 +1,116 @@
 import QtQuick 2.14
 import QtQuick.Controls 2.14
 import QtQuick.Layouts 1.14
-
-Item
+import "./TinyComponents/"
+Rectangle
 {
-    anchors.fill: parent
-
-    Column
+    id: introEnv
+    Image
     {
+        id: mainBackGround
+        anchors.fill: parent
+        source: "qrc:/images/BlueBackGround.jpg"
+    }
+    Label
+    {
+        id: title
+        text: "PMessenger!"
+        font.pointSize: parent.height / 15
+        color: Qt.color("#5ca3ab")
+        anchors
+        {
+            top: parent.top
+            topMargin: 40
+            horizontalCenter: parent.horizontalCenter
+        }
+    }
+
+
+    ColumnLayout
+    {
+        spacing: 50
         anchors.centerIn: parent
         Label
         {
-            id: title
-            text: "Welcome!"
-            font.pointSize: 30
-//            color: Qt.color("#FF00695c")
+            text: netConn.netConnected ? "All Good!" : "Connecting ..."
+            color: Qt.color("#5c9196")
+            Layout.alignment: Qt.AlignHCenter
+            font.pixelSize: 2*title.font.pixelSize/3
         }
 
         GridLayout
         {
             columns: 2
-            columnSpacing: 50
-            width: parent.width
-
             Label
             {
                 text: "Username: "
+                font.pixelSize: usernameField.fontPixelSize
             }
-            TextField
+            SingleTextInput
             {
                 id: usernameField
-                placeholderText: "Your username here ..."
+                placeHolderString: ""
+                height: 30
             }
 
             Label
             {
-                text: "Password: "
+                text: "Password:"
+                font.pixelSize: usernameField.fontPixelSize
             }
 
-            TextField
+            SingleTextInput
             {
                 id: passwordField
-                placeholderText: "Your password here"
+                placeHolderString: ""
+                height: 30
             }
 
-            Button
+        }
+        RowLayout
+        {
+
+            GeneralButton
             {
                 id: loginButton
-                text: "Login"
-                onClicked:
+                Layout.fillWidth: true
+                height: 25
+                width: 90
+                onButtonClicked:
                 {
                     netConn.sendLoginReq(usernameField.text, passwordField.text);
-//                    netConn.test();
-
+                }
+                Text
+                {
+                    anchors.centerIn: parent
+                    color: "white"
+                    text: "Login"
                 }
             }
-            Button
+            GeneralButton
             {
                 id: registerButton
-                text: "Register"
-                onClicked:
+                Layout.fillWidth: true
+                height: 25
+                width: 100
+                onButtonClicked:
                 {
                     netConn.sendRegisterReq(usernameField.text, passwordField.text);
-//                    netConn.connectToServer();
                 }
+                Text
+                {
+                    anchors.centerIn: parent
+                    color: "white"
+                    text: "Login"
+                }
+
             }
         }
     }
-    Item {
+
+
+    Item
+    {
         id: connectionStatus
         width: 40
         height: width

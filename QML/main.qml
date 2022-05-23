@@ -8,7 +8,7 @@ ApplicationWindow
     width: 1080
     height: 720
     visible: true
-    title: qsTr("P-Messenger")
+    title: qsTr("PMessenger")
     Connections
     {
         target: netConn
@@ -16,7 +16,6 @@ ApplicationWindow
         {
             if (net_msg["successful"])
             {
-                console.log("hereeeee", net_msg)
                 mainEnv.visible = true
                 introEnv.destroy()
             }
@@ -24,23 +23,18 @@ ApplicationWindow
     }
 
 
-    Image
-    {
-        id: mainBackGround
-        anchors.fill: parent
-        source: "qrc:/images/AppBackground.jpg"
-    }
-
     MainEnv
     {
         id: mainEnv
-        visible: false
+        visible: true
+        anchors.fill: parent
     }
 
     IntroEnv
     {
         id: introEnv
-//        visible: false
+        anchors.fill: parent
+        visible: false
     }
 
 }

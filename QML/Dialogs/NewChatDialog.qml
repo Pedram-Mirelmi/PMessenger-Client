@@ -119,7 +119,9 @@ Dialog
                                 onClicked:
                                 {
                                     console.log("clicked on " + model.name)
-                                    db.tryToInsertUser(model.user_id, model.username, model.name)
+                                    db.tryToInsertUser({"user_id": model.user_id,
+                                                        "username": model.username,
+                                                        "name": model.name})
                                     mainApp.openPrivateChatWith(model.user_id, model.name)
                                     newChatDialog.close()
                                 }
