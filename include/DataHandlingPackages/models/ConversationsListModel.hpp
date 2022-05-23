@@ -1,5 +1,4 @@
 #pragma once
-
 #include <QAbstractItemModel>
 #include "../../Others/TypeDefs.hpp"
 
@@ -66,7 +65,7 @@ public:
 
     virtual QHash<int, QByteArray> roleNames() const override;
 
-    void sortConversatoins(); // insertion sort
+    void sortConversations(); // insertion sort
 
     void appendConversation(const ConversatonItem& conversation);
 
@@ -74,8 +73,12 @@ public:
 
     void changeConversationToValid(const quint64& invalid_id);
 
-private slots:
+public slots:
     void popUpConversation(const QJsonObject& new_inserted_msg);
+    void addNewPrivateEnv(const NetInfoContainer& new_env_info,
+                          const QString& env_title,
+                          const quint64& last_msg_id);
+
 private:
 
     void swapItems(const quint64 &first, const quint64 &second);

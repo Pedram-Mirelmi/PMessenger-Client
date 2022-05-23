@@ -31,9 +31,7 @@ public:
 
 
     Q_INVOKABLE void
-    tryToInsertUser(const quint64 &user_id,
-                    const QString &username,
-                    const QString &name);
+    tryToInsertUser(const NetInfoContainer& user_info);
 
     bool
     tryToInit();
@@ -48,11 +46,11 @@ public:
 
 
     void
-    tryToInsertPrivateEnvs(const NetInfoCollection& envs);
+    checkForChatEnvsUpdate(const NetInfoCollection& envs);
 
 
     void
-    insertValidTextMessages(const QJsonArray& messages);
+    insertValidTextMessagesList(const QJsonArray& messages);
 
 
     void
@@ -60,7 +58,8 @@ public:
 
 
     void
-    insertValidPrivateEnv(const NetInfoContainer& env_info);
+    insertValidPrivateEnv(const NetInfoContainer& env_info,
+                          bool participates = true);
 
 
     quint16
@@ -108,7 +107,7 @@ public:
 
 
     InfoCollectionPtr
-    getAllRegisteredEnvs();
+    getAllValidEnvs();
 
 
     InfoCollectionPtr
@@ -120,7 +119,7 @@ public:
 
 
     QString
-    getOtherAudienceNameInPrivateChat(const quint64& private_env_id,
+    getOtherPersonNameInPrivateChat(const quint64& private_env_id,
                                       const bool& is_pending) const;
 
 
@@ -165,15 +164,22 @@ private:
 
 
     bool
-    execOtherQry(const char query_str[]);
+    execOtherQry(const QString& query_str);
 
 signals:
     void
     newValidTextMessageInserted(const QJsonObject& msg_info);
 
     void
+    newValidPrivateEnvInserted(const NetInfoContainer& env_info,
+                               const QString& env_title,
+                               const quint64& last_msg_id);
+
+    void
     needPrivateEnvDetails(const quint64 &env_id); // faced new raw env_id, need info and messages
 
+    void
+    needUserInfo(const quint64& user_id) const;
 };
 
 

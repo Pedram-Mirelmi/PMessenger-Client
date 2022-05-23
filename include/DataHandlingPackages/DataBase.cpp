@@ -1,9 +1,9 @@
 ﻿#include "DataBase.hpp"
-#include "../../Commons/KeyWords.hpp"
+#include "../../KeyWords.hpp"
 #include <QMutex>
 #include <memory>
 
-static char data_path[] = "/home/pedram/Desktop/PMessenger/Client/data/";
+static char data_path[] = "../data/";
 static char database_filename[] = "db.sqlite";
 static char sql_codes_filename[] = "SqliteQueries.sql";
 
@@ -18,13 +18,14 @@ DataBase::DataBase(QObject* parent, InfoContainer& user_info)
 
 // Q_INVOKABLE
 void
-DataBase::tryToInsertUser(const quint64 &user_id,
-                          const QString &username,
-                          const QString &name)
+DataBase::tryToInsertUser(const NetInfoContainer& user_info)
 {
+    using namespace KeyWords;
     this->execOtherQry(fmt::format("INSERT INTO users(user_id, username, name) "
                                    "VALUES({}, '{}', '{}');",
-                                   user_id, username.toStdString(), name.toStdString()).c_str());
+                                   user_info[USER_ID].toInteger(),
+                                   user_info[USERNAME].toString().toStdString(),
+                                   user_info[NAME].toString().toStdString().c_str()).c_str());
 }
 
 
@@ -33,6 +34,8 @@ DataBase::tryToInit()
 {
     using namespace KeyWords;
     QFile file;
+    qDebug() << QDir::currentPath();
+    qDebug() << QString(data_path) + this->m_user_info[USERNAME].toString() + ".sqlite";
     if (!file.exists(QString(data_path) + this->m_user_info[USERNAME].toString() + ".sqlite"))
     {
         if (!this->tryToCreateDBFile())
@@ -75,20 +78,21 @@ DataBase::createTables()
 
 
 void
-DataBase::tryToInsertPrivateEnvs(const NetInfoCollection &envs)
+DataBase::checkForChatEnvsUpdate(const NetInfoCollection &envs)
 {
     using namespace KeyWords;
-    for (const auto &private_env_variant : envs)
-        if (!envExists(private_env_variant.toInteger()))
-            emit this->needPrivateEnvDetails(private_env_variant.toInteger());
+    for (auto itter = envs.constBegin(); itter != envs.constEnd(); itter++)
+        if (!envExists(itter->toInteger()))
+            emit this->needPrivateEnvDetails(itter->toInteger());
 }
 
 void
-DataBase::insertValidTextMessages(const QJsonArray &messages)
+DataBase::insertValidTextMessagesList(const NetInfoCollection &messages)
 {
     using namespace KeyWords;
-    for (const auto& message : messages)
-        this->insertValidTextMessage(message.toObject());
+    auto messages_list = DataBase::convertToNormalForm(messages);
+    for (auto itter = messages_list->begin(); itter < messages_list->end(); itter++)
+        this->insertValidTextMessage(itter->toObject());
 }
 
 
@@ -101,20 +105,27 @@ DataBase::deletePendingChat(const quint64 &invalid_id)
 
 
 void
-DataBase::insertValidPrivateEnv(const NetInfoContainer &env_info)
+DataBase::insertValidPrivateEnv(const NetInfoContainer &env_info, bool participates)
 {
     using namespace KeyWords;
+    auto other_person = env_info[OTHER_PERSON_INFO].toObject();
+    this->tryToInsertUser(other_person);
     const auto create_env_query = fmt::format("INSERT INTO chat_envs(env_id, participates) "
-                                              "VALUES({}, 1);",
-                                              env_info[ENV_ID].toInteger());
-    this->execOtherQry(create_env_query.c_str());
+                                              "VALUES({}, {});",
+                                              env_info[ENV_ID].toInteger(), (int)participates);
     const auto create_private_query = fmt::format("INSERT INTO "
-                                                  "private_chats(env_id, first_person, second_person) "
-                                                  "VALUES({},   {},     {});",
+                                                  "private_chats(env_id, other_person) "
+                                                  "VALUES       ({},       {});",
                                                   env_info[ENV_ID].toInteger(),
-                                                  env_info[FIRST_PERSON].toInteger(),
+                                                  other_person[USER_ID].toInteger(),
                                                   env_info[SECOND_PERSON].toInteger());
-    this->execOtherQry(create_private_query.c_str());
+    if (this->execOtherQry(create_env_query.c_str()) &&
+            this->execOtherQry(create_private_query.c_str()))
+    {
+        emit this->newValidPrivateEnvInserted(env_info,
+                                              other_person[NAME].toString(),
+                                              this->getLastEnvMessageId(env_info[ENV_ID].toInteger()));
+    }
 }
 
 
@@ -257,7 +268,7 @@ DataBase::getEnvTextMessages(const quint64 &env_id,
 
 
 InfoCollectionPtr
-DataBase::getAllRegisteredEnvs()
+DataBase::getAllValidEnvs()
 {
     return this->SELECT("SELECT * FROM private_chats");
 }
@@ -277,22 +288,26 @@ DataBase::getNameOfUser(const quint64 &user_id) const
                                                     "WHERE user_id = {}",
                                                     user_id).c_str()
                                         );
+    if(user_info->isEmpty())
+    {
+        emit this->needUserInfo(user_id);
+        return "Unknown";
+    }
+
     return user_info->value(KeyWords::NAME).toString();
 }
 
 
 QString
-DataBase::getOtherAudienceNameInPrivateChat(const quint64 &private_env_id,
+DataBase::getOtherPersonNameInPrivateChat(const quint64 &private_env_id,
                                             const bool& is_pending) const
 {
     using namespace KeyWords;
-    std::shared_ptr<InfoContainer> user_info;
-    user_info = is_pending ? this->getPendingPrivateChatInfoByEnvId(private_env_id) :
+    InfoContainerPtr env_info;
+    env_info = is_pending ? this->getPendingPrivateChatInfoByEnvId(private_env_id) :
                              this->getValidPrivateChatInfoByEnvId(private_env_id);
 
-    return user_info->value(FIRST_PERSON).toUInt() == this->m_user_info[USER_ID].toUInt() ?
-                this->getNameOfUser(user_info->value(SECOND_PERSON).toUInt()) :
-                this->getNameOfUser(user_info->value(FIRST_PERSON).toUInt());
+    return this->getNameOfUser((*env_info)[OTHER_PERSON_INFO].toJsonObject()[USER_ID].toInteger());
 }
 
 quint64
@@ -301,7 +316,7 @@ DataBase::getLastEnvMessageId(const quint64 env_id) const
     auto info = this->singleSELECT(fmt::format("SELECT MAX(message_id) AS id "
                                                "FROM messages "
                                                "WHERE env_id = {};", env_id).c_str());
-    return info->value("id").toUInt();
+    return info->contains("id") ? info->value("id").toUInt() : this->getMaxMessagesId();
 }
 
 
@@ -334,7 +349,7 @@ DataBase::isValidPrivateChat(const quint64 &env_id) const
 {
     return !(this->singleSELECT(fmt::format("SELECT * FROM private_chats "
                                             "WHERE env_id={};", env_id).c_str())
-             )->isEmpty();
+            )->isEmpty();
 }
 
 
@@ -343,7 +358,7 @@ DataBase::isPendingPrivateChat(const quint64 &env_id) const
 {
     return !(this->singleSELECT(fmt::format("SELECT * FROM pending_chat_envs "
                                             "WHERE env_id={};", env_id).c_str())
-             )->isEmpty();
+            )->isEmpty();
 }
 
 
@@ -352,8 +367,8 @@ void
 DataBase::convertToHash(InfoContainer &target,
                         const QJsonObject &source)
 {
-    for (const auto& key : source.keys())
-        target[key.toStdString().c_str()] = source[key].toVariant();
+    for (auto itter = source.constBegin(); itter < source.constEnd(); itter++)
+        target[itter.key()] = itter.value().toVariant();
 }
 
 
@@ -408,7 +423,7 @@ DataBase::singleSELECT(const char query_str[]) const
 }
 
 bool
-DataBase::execOtherQry(const char query_str[])
+DataBase::execOtherQry(const QString& query_str)
 {
     QSqlQuery query(this->db);
     return query.exec(query_str);

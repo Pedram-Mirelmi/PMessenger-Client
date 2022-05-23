@@ -9,7 +9,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
-#include "../../Commons/KeyWords.hpp"
+#include "../../KeyWords.hpp"
 #include "DataBase.hpp"
 #include "../NetworkPackages/NetworkHandler.hpp"
 #include "./models/ConversationsListModel.hpp"
@@ -27,6 +27,7 @@ class DataHandler : public QObject
     NetworkHandler* m_net_handler;
     MessageListModel* m_message_list_model;
     ConversationsListModel* m_conversation_list_model;
+
 
 public:
     explicit DataHandler(QObject* parent,

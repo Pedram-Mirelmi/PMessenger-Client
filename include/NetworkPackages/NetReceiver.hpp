@@ -6,7 +6,7 @@
 #include <QMutex>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include "../../../Commons/KeyWords.hpp"
+#include "../../KeyWords.hpp"
 
 class NetMessageReceiver : public QObject
 {
@@ -21,11 +21,14 @@ public:
     explicit NetMessageReceiver(QObject* parent, QTcpSocket* socket, const quint8& header_size = 8);
 
 public slots:
+//    void testSlot()
+//    {
+//        qDebug() << "hereee:////////";
+//    }
     void startListening();
     void stopListening();
 
 private slots:
-
     void receiveMessage ();
 
 private:

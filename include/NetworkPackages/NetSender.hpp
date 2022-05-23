@@ -5,7 +5,7 @@
 #include <QTcpSocket>
 #include <QJsonObject>
 #include <QJsonDocument>
-#include "../Commons/KeyWords.hpp"
+#include "../../KeyWords.hpp"
 #include <cmath>
 
 class NetMessageSender : public QObject

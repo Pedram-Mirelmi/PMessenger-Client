@@ -61,6 +61,7 @@ public:
 public slots:
     void connectToServer();
     void handleNewNetMessage(const QJsonObject& net_msg);
+    void sendUserInfoReq(const quint64& user_id);
 
 signals:
     void entrySuccessful(const QJsonObject& msg);

@@ -20,13 +20,23 @@ DataHandler::DataHandler(QObject *parent, NetworkHandler *netHandler, InfoContai
                         }
     );
 
+    QObject::connect(this->m_db, &DataBase::needUserInfo,[&](const quint64& user_id)
+                        {
+                            this->m_net_handler->sendUserInfoReq(user_id);
+                        }
+    );
+
     QObject::connect(this->m_db, &DataBase::newValidTextMessageInserted,
                      this->m_message_list_model, &MessageListModel::considerNewTextMessage);
 
     QObject::connect(this->m_db, &DataBase::newValidTextMessageInserted,
                      this->m_conversation_list_model, &ConversationsListModel::popUpConversation);
-}
 
+    QObject::connect(this->m_db, &DataBase::newValidPrivateEnvInserted,
+                     this->m_conversation_list_model, &ConversationsListModel::addNewPrivateEnv);
+
+
+}
 
 //private
 void DataHandler::prepareDB()
@@ -45,15 +55,15 @@ void DataHandler::handleNewData(const QJsonObject &net_message)
     {
         this->handleFetchResult(net_message);
     }
-    else if (data_type == ENV_DETAILS)
+    else if (data_type == PRIVATE_ENV_DETAILS)
     {
         this->m_db->insertValidPrivateEnv(net_message[ENV_INFO].toObject());
-        this->m_db->insertValidTextMessages(net_message[TEXT_MESSAGES].toArray());
+        this->m_db->insertValidTextMessagesList(net_message[TEXT_MESSAGES].toArray());
     }
     else if (data_type == MESSAGE)
     {
         if (net_message.contains(TEXT_MESSAGES))
-            this->m_db->insertValidTextMessages(net_message[TEXT_MESSAGES].toArray());
+            this->m_db->insertValidTextMessagesList(net_message[TEXT_MESSAGES].toArray());
     }
     else if (data_type == CHAT_CREATION_CONFIRMATION)
     {
@@ -62,8 +72,12 @@ void DataHandler::handleNewData(const QJsonObject &net_message)
     }
     else if (data_type == SEARCH_USERNAME_RESULT)
     {
-        auto search_results = this->m_db->convertToNormalForm(net_message[SEARCH_RESULT].toArray());
+        auto search_results = DataBase::convertToNormalForm(net_message[SEARCH_RESULT].toArray());
         emit this->searchUsernameResultArrived(*search_results);
+    }
+    else if (data_type == USER_INFO)
+    {
+//        this->m_db->tryToInsertUser(net_message[])
     }
 }
 
@@ -96,7 +110,7 @@ void DataHandler::handleFetchResult(const QJsonObject &net_message)
 
     if (net_message.contains(PRIVATE_CHATS))
     {
-        this->m_db->tryToInsertPrivateEnvs(net_message[PRIVATE_CHATS].toArray());
+        this->m_db->checkForChatEnvsUpdate(net_message[PRIVATE_CHATS].toArray());
     }
 }
 
@@ -141,31 +155,28 @@ void DataHandler::fillConversationListModel()
 {
     using namespace KeyWords;
     this->m_conversation_list_model->beginResetModel();
-    auto registereds = this->m_db->getAllRegisteredEnvs();
-    auto number_of_registered_envs = registereds->size();
+
+    auto valid_envs = this->m_db->getAllValidEnvs();
+    auto number_of_valid_envs = valid_envs->size();
     auto pendings = this->m_db->getAllPendingEnvs();
     quint16 i = 0;
     auto& new_data = this->m_conversation_list_model->m_conversations;
     new_data.clear();
-    new_data.reserve(registereds->size() + pendings->size());
+    new_data.reserve(valid_envs->size() + pendings->size());
 
-    for (; i < number_of_registered_envs; i++)
+    for (; i < number_of_valid_envs; i++)
         new_data.emplace_back(
                     pendings->value(i)[ENV_ID].toUInt(),
                     false,
-                    ((registereds->value(i)[FIRST_PERSON].toUInt() == this->m_user_info[USER_ID].toUInt()) ?
-                         this->m_db->getNameOfUser(registereds->value(i)[FIRST_PERSON].toUInt()) :
-                         this->m_db->getNameOfUser(registereds->value(i)[SECOND_PERSON].toUInt())),
-                    this->m_db->getLastEnvMessageId(registereds->value(i)[ENV_ID].toUInt())
+                    this->m_db->getNameOfUser(valid_envs->value(i)[OTHER_PERSON].toUInt()),
+                    this->m_db->getLastEnvMessageId(valid_envs->value(i)[ENV_ID].toUInt())
                     );
 
     for (; i < new_data.capacity(); i++)
         new_data.emplace_back(
                     pendings->value(i)[INVALID_ENV_ID].toUInt(),
                     true,
-                    (pendings->value(i)[FIRST_PERSON].toUInt() == this->m_user_info[USER_ID].toUInt()) ?
-                        this->m_db->getNameOfUser(pendings->value(i)[FIRST_PERSON].toUInt()) :
-                        this->m_db->getNameOfUser(pendings->value(i)[SECOND_PERSON].toUInt()),
+                    this->m_db->getNameOfUser(pendings->value(i)[OTHER_PERSON].toUInt()),
                     this->m_db->getMaxMessagesId()
                     );
 
@@ -177,9 +188,9 @@ QString DataHandler::getProperConversationHeader(const quint64 &env_id,
                                                  const bool& is_pending)
 {
     if(!is_pending && this->m_db->isValidPrivateChat(env_id))
-        return this->m_db->getOtherAudienceNameInPrivateChat(env_id, false);
+        return this->m_db->getOtherPersonNameInPrivateChat(env_id, false);
     else if(is_pending && this->m_db->isPendingPrivateChat(env_id))
-        return this->m_db->getOtherAudienceNameInPrivateChat(env_id, true);
+        return this->m_db->getOtherPersonNameInPrivateChat(env_id, true);
 
     qDebug() << "wasn't private!";
     return QString();

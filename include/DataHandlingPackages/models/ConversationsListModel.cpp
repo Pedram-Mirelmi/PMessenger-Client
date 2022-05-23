@@ -1,5 +1,5 @@
 #include "ConversationsListModel.hpp"
-#include "../Commons/KeyWords.hpp"
+#include "../../../KeyWords.hpp"
 #include "../../ClientKeywords.hpp"
 #include <QJsonObject>
 
@@ -112,7 +112,7 @@ QHash<int, QByteArray> ConversationsListModel::roleNames() const
     return names;
 }
 
-void ConversationsListModel::sortConversatoins() // insertion sort
+void ConversationsListModel::sortConversations() // insertion sort
 {
     using namespace KeyWords;
     for (auto i = 0; i < this->m_conversations.size() - 1; i++)
@@ -172,7 +172,16 @@ void ConversationsListModel::popUpConversation(const QJsonObject& new_inserted_m
 //            this->swapItems(conv_index_in_model, conv_index_in_model + 1);
 //            conv_index_in_model++;
 //        }
-//    }
+    //    }
+}
+
+void ConversationsListModel::addNewPrivateEnv(const NetInfoContainer &new_env_info,
+                                              const QString& env_title,
+                                              const quint64& last_msg_id)
+{
+    using namespace KeyWords;
+    this->appendConversation(ConversatonItem(new_env_info[ENV_ID].toInteger(),
+                                                  false, env_title, last_msg_id));
 }
 
 void ConversationsListModel::swapItems(const quint64 &first, const quint64 &second)

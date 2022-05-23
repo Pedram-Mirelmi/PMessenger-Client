@@ -19,15 +19,19 @@ NetworkHandler::NetworkHandler(QObject *parent,
 {
     this->m_receiver->moveToThread(this->m_network_thread);
     this->m_sender->moveToThread(this->m_network_thread);
+    this->m_network_thread->start();
 
     QObject::connect(this->m_socket, &QTcpSocket::disconnected,
-                     this->m_receiver, &NetMessageReceiver::stopListening, Qt::UniqueConnection);
+                     this->m_receiver, &NetMessageReceiver::stopListening,
+                     (Qt::ConnectionType)(Qt::QueuedConnection | Qt::UniqueConnection));
 
     QObject::connect(this->m_socket, &QTcpSocket::connected,
-                     this->m_receiver, &NetMessageReceiver::startListening, Qt::UniqueConnection);
+                     this->m_receiver, &NetMessageReceiver::startListening,
+                     (Qt::ConnectionType)(Qt::QueuedConnection | Qt::UniqueConnection));
 
     QObject::connect(this->m_receiver, &NetMessageReceiver::newNetMessageArrived,
-                     this, &NetworkHandler::handleNewNetMessage, Qt::UniqueConnection);
+                     this, &NetworkHandler::handleNewNetMessage,
+                     (Qt::ConnectionType)(Qt::QueuedConnection | Qt::UniqueConnection));
 
     QObject::connect(this->m_socket, &QTcpSocket::stateChanged,
                      [&](const QTcpSocket::SocketState& new_state)
@@ -126,14 +130,6 @@ void NetworkHandler::sendNewTextMessageReq(const quint64& env_id,
     this->m_sender->sendNetMessage(req);
 }
 
-void NetworkHandler::sendEnvDetailsReq(const quint64& env_id)
-{
-    using namespace KeyWords;
-    QJsonObject req;
-    req[NET_MESSAGE_TYPE] = GET_ENV_DETAILS;
-    req [ENV_ID] = (qint64)env_id;
-}
-
 
 // public slot
 void NetworkHandler::connectToServer()
@@ -160,4 +156,22 @@ void NetworkHandler::handleNewNetMessage(const QJsonObject &net_msg)
         emit this->newDataArrived(net_msg);
         return;
     }
+}
+
+void NetworkHandler::sendEnvDetailsReq(const quint64& env_id)
+{
+    using namespace KeyWords;
+    QJsonObject req;
+    req[NET_MESSAGE_TYPE] = GET_PRIVATE_ENV_DETAILS;
+    req[ENV_ID] = (qint64)env_id;
+    this->m_sender->sendNetMessage(req);
+}
+
+void NetworkHandler::sendUserInfoReq(const quint64 &user_id)
+{
+    using namespace KeyWords;
+    QJsonObject req;
+    req[NET_MESSAGE_TYPE] = GET_USER_INFO;
+    req[USER_ID] = (qint64)user_id;
+    this->m_sender->sendNetMessage(req);
 }
