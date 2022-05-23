@@ -18,6 +18,7 @@ namespace KeyWords
 // tables keywords
 constexpr auto FIRST_PERSON = "first_person";
 constexpr auto SECOND_PERSON = "second_person";
+constexpr auto OTHER_PERSON = "other_person";
 constexpr auto USERNAME = "username";
 constexpr auto PASSWORD = "password";
 constexpr auto NAME = "name";
@@ -86,19 +87,27 @@ constexpr auto CHANNELS = "channels";
 /*
     GET_PRIVATE_ENV_DETAILS when client requests for messages in a private_env with id of "env_id"
     request:    {MESSAGE_TYPE: GET_PRIVATE_ENV_DETAILS, ENV_ID: ...}
-    response:   {NET_MESSAGE_TYPE: DATA, DATA_TYPE: ENV_DETAILS, TEXT_MESSAGES: [...], ... , ENV_INFO: {...}}
+    response:   {NET_MESSAGE_TYPE: DATA, DATA_TYPE: PRIVATE_ENV_DETAILS, TEXT_MESSAGES: [...], ... , ENV_INFO: {...}, OTHER_PERSON_INFO: {...}}
 */
-constexpr auto GET_ENV_DETAILS = "get_private_env_details";
-constexpr auto ENV_DETAILS = "env_details";
+constexpr auto GET_PRIVATE_ENV_DETAILS = "get_private_env_details";
+constexpr auto PRIVATE_ENV_DETAILS = "private_env_details";
 constexpr auto ENV_MESSAGES = "env_messages";
 constexpr auto ENV_INFO = "env_info";
+constexpr auto OTHER_PERSON_INFO = "other_person_info";
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/*
+    GET_USER_INFO when client has something mutual with some other user but has only their user_id
+    request:    {NET_MESSAGE_TYPE: GET_UESR_INFO, USER_ID: ...}
+    response:   {NET_MESSAGE_TYPE: DATA, DATA_TYPE: USER_INFO, USER_INFO:{...}}
+*/
+constexpr auto GET_USER_INFO = "get_user_info";
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
     SEARCH_USERNAME when user search for another user to start a new conversation with
     request:    {NET_MESSAGE_TYPE: SEARCH_USERNAME, USERNAME_TO_SEARCH: ...}
     response:   {NET_MESSAGE_TYPE: USER_SEARCH_RESULT, SEARCH_RESULT: [...]}
-]
 */
 constexpr auto SEARCH_USERNAME = "search_username";
 constexpr auto USERNAME_TO_SEARCH = "username_to_search";
