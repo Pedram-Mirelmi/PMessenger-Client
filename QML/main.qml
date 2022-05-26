@@ -34,7 +34,7 @@ ApplicationWindow
     {
         id: introEnv
         anchors.fill: parent
-        visible: false
+        visible: true
     }
 
 }

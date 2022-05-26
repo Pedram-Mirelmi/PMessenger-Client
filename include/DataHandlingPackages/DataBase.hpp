@@ -46,7 +46,7 @@ public:
 
 
     void
-    checkForChatEnvsUpdate(const NetInfoCollection& envs);
+    checkForAnyPrivateEnvUpdate(const NetInfoCollection& envs);
 
 
     void
@@ -180,6 +180,9 @@ signals:
 
     void
     needUserInfo(const quint64& user_id) const;
+
+    void
+    needPrivateEnvMessages(quint64 env_id, quint64 last_message_we_have);
 };
 
 

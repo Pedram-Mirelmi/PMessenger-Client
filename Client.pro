@@ -11,6 +11,7 @@ LIBS += -lfmt
 SOURCES += \
     include/DataHandlingPackages/DataBase.cpp \
     include/DataHandlingPackages/DataHandler.cpp \
+    include/DataHandlingPackages/NetPendingTaskManager.cpp \
     include/DataHandlingPackages/models/ConversationsListModel.cpp \
     include/DataHandlingPackages/models/MessageListModel.cpp \
     include/MainApp.cpp \
@@ -34,10 +35,12 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 HEADERS += \
+    KeyWords.hpp \
     include/DataHandlingPackages/DataBase.hpp \
     include/DataHandlingPackages/DataHandler.hpp \
     include/ClientKeywords.hpp \
     include/CustomTypes/TSQByteArray.h \
+    include/DataHandlingPackages/NetPendingTaskManager.h \
     include/DataHandlingPackages/models/ConversationsListModel.hpp \
     include/DataHandlingPackages/models/MessageListModel.hpp \
     include/MainApp.hpp \
@@ -46,6 +49,7 @@ HEADERS += \
     include/NetworkPackages/NetworkHandler.hpp \
     include/Others/TypeDefs.hpp \
     include/Others/format.hpp \
-    include/Others/stringTools.hpp
+    include/Others/stringTools.hpp \
+    stringTools.hpp
 
 DISTFILES +=

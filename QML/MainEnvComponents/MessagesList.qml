@@ -31,12 +31,20 @@ Rectangle
         {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Image
+            gradient: Gradient
             {
-                anchors.fill: parent
-                id: chatBackGround
-                source: "qrc:/images/BlueBackGround.jpg"
+                GradientStop {position: 0.0; color: "#2b6aad"}
+                GradientStop {position: 1.0; color: "#22548a"}
             }
+            Label
+            {
+                text: "Start chatting!"
+                font.pixelSize: 20
+                visible: chatList.count === 0
+                anchors.centerIn: parent
+
+            }
+
             ListView
             {
                 id: chatList

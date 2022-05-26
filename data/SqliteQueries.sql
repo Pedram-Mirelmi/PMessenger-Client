@@ -19,22 +19,18 @@ DROP TABLE IF EXISTS private_chats;
 CREATE TABLE IF NOT EXISTS private_chats
 (
     env_id                  INTEGER UNSIGNED PRIMARY KEY,
-    first_person            INTEGER UNSIGNED NOT NULL ,
-    second_person           INTEGER UNSIGNED NOT NULL ,
-    UNIQUE (first_person, second_person),
+    other_person            INTEGER UNSIGNED UNIQUE,
     FOREIGN KEY (env_id) REFERENCES chat_envs(env_id),
-    FOREIGN KEY (first_person) REFERENCES contacts (user_id),
-    FOREIGN KEY (second_person) REFERENCES contacts (user_id)
+    FOREIGN KEY (other_person) REFERENCES users (user_id)
 );
 
 DROP TABLE IF EXISTS pending_chat_envs;
 CREATE TABLE IF NOT EXISTS pending_chat_envs
 (
-    invalid_env_id           INTEGER PRIMARY KEY AUTOINCREMENT,
-    env_type                 CHAR(1),
-    first_person             INTEGER UNSIGNED ,
-    second_person            INSTEGER UNSIGNED,
-    UNIQUE (first_person, second_person)
+    invalid_env_id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    env_type                CHAR(1),
+    other_person            INTEGER UNSIGNED UNIQUE ,
+    FOREIGN KEY (other_person) REFERENCES users(user_id)
 );
 
 DROP TABLE IF EXISTS messages;
@@ -44,7 +40,7 @@ CREATE TABLE IF NOT EXISTS messages
     owner_id                    INTEGER UNSIGNED NOT NULL ,
     env_id                      INTEGER UNSIGNED NOT NULL ,
     created_at                  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL ,
-    FOREIGN KEY (owner_id) REFERENCES contacts (user_id),
+    FOREIGN KEY (owner_id) REFERENCES users (user_id),
     FOREIGN KEY (env_id) REFERENCES chat_envs(env_id)
 );
 
@@ -56,8 +52,8 @@ CREATE TABLE text_messages
     FOREIGN KEY (message_id) REFERENCES messages(message_id)
 );
 
-DROP TABLE IF EXISTS pending_messages;
-CREATE TABLE IF NOT EXISTS pending_messages
+DROP TABLE IF EXISTS pending_text_messages;
+CREATE TABLE IF NOT EXISTS pending_text_messages
 (
     invalid_message_id        INTEGER PRIMARY KEY AUTOINCREMENT,
     env_id                    INTEGER UNSIGNED ,

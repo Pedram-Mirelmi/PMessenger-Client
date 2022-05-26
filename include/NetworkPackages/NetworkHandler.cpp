@@ -167,6 +167,14 @@ void NetworkHandler::sendEnvDetailsReq(const quint64& env_id)
     this->m_sender->sendNetMessage(req);
 }
 
+void NetworkHandler::sendEnvMessagesReq(const quint64 &env_id, const quint64 &last_message_we_have)
+{
+    using namespace KeyWords;
+    QJsonObject req;
+    req[NET_MESSAGE_TYPE] = GET_PRIVATE_ENV_MESSAGES;
+//    req[NE]
+}
+
 void NetworkHandler::sendUserInfoReq(const quint64 &user_id)
 {
     using namespace KeyWords;

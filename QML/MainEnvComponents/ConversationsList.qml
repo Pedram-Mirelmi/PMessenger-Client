@@ -64,7 +64,7 @@ Rectangle
         width: parent.width
         gradient: Gradient
         {
-            GradientStop {position: 0.0; color: "pink"}
+            GradientStop {position: 0.0; color: "#2b6aad"}
             GradientStop {position: 1.0; color: "#22548a"}
         }
         ListView
@@ -97,22 +97,12 @@ Rectangle
                             //                        chatsModel.currChatIndex = model.index
                         }
                     }
-
                     Label
                     {
                         id: contactLabelId
                         text: model.title
                         font.pointSize: 20
                     }
-                    Label
-                    {
-                        id: idSection
-                        text: model.username
-                        font.pixelSize: 10
-                        anchors.top: contactLabelId.bottom
-                        anchors.topMargin: 5
-                    }
-
                 }
             }
         }

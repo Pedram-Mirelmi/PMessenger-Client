@@ -1,6 +1,7 @@
 ﻿#include "DataBase.hpp"
 #include "../../KeyWords.hpp"
 #include <QMutex>
+#include <QMutexLocker>
 #include <memory>
 
 static char data_path[] = "../data/";
@@ -8,6 +9,7 @@ static char database_filename[] = "db.sqlite";
 static char sql_codes_filename[] = "SqliteQueries.sql";
 
 QMutex insert_lock; // to get last_insert_rowid() thead safly
+
 
 DataBase::DataBase(QObject* parent, InfoContainer& user_info)
     :QObject(parent),
@@ -78,18 +80,30 @@ DataBase::createTables()
 
 
 void
-DataBase::checkForChatEnvsUpdate(const NetInfoCollection &envs)
+DataBase::checkForAnyPrivateEnvUpdate(const NetInfoCollection &envs)
 {
     using namespace KeyWords;
     for (auto itter = envs.constBegin(); itter != envs.constEnd(); itter++)
-        if (!envExists(itter->toInteger()))
+    {
+        auto env_little_info = itter->toArray(); // the info : [env_id, last_message_id]
+        if (!envExists(env_little_info[0].toInteger()))
+        {
             emit this->needPrivateEnvDetails(itter->toInteger());
+        }
+        else if(!env_little_info[1].isNull() &&
+                getLastEnvMessageId(env_little_info[0].toInteger()) != (quint64)env_little_info[1].toInteger())
+        {
+            emit this->needPrivateEnvMessages(env_little_info[0].toInteger(), getLastEnvMessageId(env_little_info[0].toInteger()));
+        }
+
+    }
 }
 
 void
 DataBase::insertValidTextMessagesList(const NetInfoCollection &messages)
 {
     using namespace KeyWords;
+    QMutexLocker scoped_lock(&insert_lock);
     auto messages_list = DataBase::convertToNormalForm(messages);
     for (auto itter = messages_list->begin(); itter < messages_list->end(); itter++)
         this->insertValidTextMessage(itter->toObject());
@@ -133,13 +147,12 @@ quint16
 DataBase::insertPendingPrivateChat(const quint64 &user_id)
 {
     using namespace KeyWords;
-    insert_lock.lock();
+    QMutexLocker scoped_lock(&insert_lock);
     this->execOtherQry(fmt::format("INSERT INTO pending_chat_envs(env_type, first_person, second_person) "
                                    "VALUES('private_chat', {}, {});",
                                    this->m_user_info[USER_ID].toUInt(), user_id).c_str()
                        );
     auto inserted_invalid_id = this->getLastInsertId();
-    insert_lock.unlock();
     return inserted_invalid_id;
 }
 
@@ -149,7 +162,7 @@ DataBase::insertPendingTextMessage(const quint16 &env_id,
                                    const QString &message_text,
                                    const bool& to_pending_env)
 {
-    insert_lock.lock();
+    QMutexLocker scoped_lock(&insert_lock);
     auto id_field = to_pending_env ? "invalid_env_id" : "env_id";
     this->execOtherQry(fmt::format("INSERT INTO pending_messages({}, message_text) "
                                    "VALUES({}, '{}');",
@@ -157,7 +170,6 @@ DataBase::insertPendingTextMessage(const quint16 &env_id,
                                    toRaw(message_text.toStdString())).c_str()
                        );
     auto inserted_id = getLastInsertId();
-    insert_lock.unlock();
     return inserted_id;
 }
 
@@ -167,7 +179,7 @@ void
 DataBase::insertValidTextMessage(const QJsonObject& msg_info)
 {
     using namespace KeyWords;
-    insert_lock.lock();
+    QMutexLocker scoped_lock(&insert_lock);
     bool ok;
     auto general_message_insert_query = fmt::format(
                 "INSERT INTO messages(message_id, owner_id, env_id, created_at) VALUES "
@@ -182,7 +194,6 @@ DataBase::insertValidTextMessage(const QJsonObject& msg_info)
     ok = this->execOtherQry(text_message_insert_query.c_str()) && ok;
     if (msg_info.contains(SEEN) && !msg_info[SEEN].toBool() && ok)
         emit this->newValidTextMessageInserted(msg_info);
-    insert_lock.unlock();
 }
 
 
@@ -316,7 +327,7 @@ DataBase::getLastEnvMessageId(const quint64 env_id) const
     auto info = this->singleSELECT(fmt::format("SELECT MAX(message_id) AS id "
                                                "FROM messages "
                                                "WHERE env_id = {};", env_id).c_str());
-    return info->contains("id") ? info->value("id").toUInt() : this->getMaxMessagesId();
+    return info->contains("id") ? info->value("id").toUInt() : 0;
 }
 
 

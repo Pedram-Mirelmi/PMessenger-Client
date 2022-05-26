@@ -31,9 +31,9 @@
 *.out
 *.app
 
-*.vscode/
-/Client/build/
+*.vscode/*
+./build/*
 *.autosave
 *.sqlite
-/Client/data/
+./data/*
 *test*

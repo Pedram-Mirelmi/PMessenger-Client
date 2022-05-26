@@ -58,6 +58,8 @@ public:
 
     void sendEnvDetailsReq(const quint64& env_id);
 
+    void sendEnvMessagesReq(const quint64& env_id, const quint64& last_message_we_have);
+
 public slots:
     void connectToServer();
     void handleNewNetMessage(const QJsonObject& net_msg);

@@ -20,9 +20,15 @@ DataHandler::DataHandler(QObject *parent, NetworkHandler *netHandler, InfoContai
                         }
     );
 
-    QObject::connect(this->m_db, &DataBase::needUserInfo,[&](const quint64& user_id)
+    QObject::connect(this->m_db, &DataBase::needUserInfo,[=](const quint64& user_id)
                         {
                             this->m_net_handler->sendUserInfoReq(user_id);
+                        }
+    );
+
+    QObject::connect(this->m_db, &DataBase::needPrivateEnvMessages, [=](const quint64& env_id, const quint64& last_message_we_have)
+                        {
+                            this->m_net_handler->sendEnvMessagesReq(env_id, last_message_we_have);
                         }
     );
 
@@ -77,7 +83,7 @@ void DataHandler::handleNewData(const QJsonObject &net_message)
     }
     else if (data_type == USER_INFO)
     {
-//        this->m_db->tryToInsertUser(net_message[])
+        this->m_db->tryToInsertUser(net_message[USER_INFO].toObject());
     }
 }
 
@@ -104,13 +110,13 @@ void DataHandler::registerAllMessages()
 
 
 // private
-void DataHandler::handleFetchResult(const QJsonObject &net_message)
+void DataHandler::handleFetchResult(const NetInfoContainer &net_message)
 {
     using namespace KeyWords;
 
     if (net_message.contains(PRIVATE_CHATS))
     {
-        this->m_db->checkForChatEnvsUpdate(net_message[PRIVATE_CHATS].toArray());
+        this->m_db->checkForAnyPrivateEnvUpdate(net_message[PRIVATE_CHATS].toArray());
     }
 }
 

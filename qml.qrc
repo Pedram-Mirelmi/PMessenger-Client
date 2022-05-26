@@ -4,12 +4,16 @@
         <file>QML/IntroEnv.qml</file>
         <file>QML/main.qml</file>
         <file>QML/MainEnv.qml</file>
-        <file>QML/MainEnvComponents/ChatsList.qml</file>
+        <file>QML/MainEnvComponents/ConversationsList.qml</file>
         <file>QML/MainEnvComponents/MessagesList.qml</file>
         <file>QML/Dialogs/NewChatDialog.qml</file>
         <file>images/AppBackground.jpg</file>
         <file>images/disconnected.png</file>
         <file>images/connected.png</file>
+        <file>QML/TinyComponents/GeneralButton.qml</file>
+        <file>QML/TinyComponents/SingleTextInput.qml</file>
+        <file>images/BlueBackGround.jpg</file>
+        <file>QML/TinyComponents/MultiLineTextInput.qml</file>
     </qresource>
     <qresource prefix="/QML/MainEnvComponenct"/>
 </RCC>
