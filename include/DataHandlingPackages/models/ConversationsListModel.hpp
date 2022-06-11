@@ -51,8 +51,6 @@ public:
     void selectChat(const quint64& env_id,
                     const bool& is_pending);
 
-public:
-
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
 
     QVariant data(const QModelIndex &index,
@@ -65,13 +63,17 @@ public:
 
     virtual QHash<int, QByteArray> roleNames() const override;
 
+    void considerNewValidatedTextMessage(const NetInfoContainer &valid_message_info,
+                                         const quint64 &invalid_message_id);
+
     void sortConversations(); // insertion sort
 
     void appendConversation(const ConversatonItem& conversation);
 
     void tryToInsertConversation(const ConversatonItem& conversation);
 
-    void changeConversationToValid(const quint64& invalid_id);
+    void changeConversationToValid(const quint64& invalid_id,
+                                   const quint64& new_valid_env_id);
 
 public slots:
     void popUpConversation(const QJsonObject& new_inserted_msg);

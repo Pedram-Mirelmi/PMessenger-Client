@@ -64,34 +64,24 @@ void DataHandler::handleNewData(const QJsonObject &net_message)
     else if (data_type == PRIVATE_ENV_DETAILS)
     {
         this->m_db->insertValidPrivateEnv(net_message[ENV_INFO].toObject());
-        this->m_db->insertValidTextMessagesList(net_message[TEXT_MESSAGES].toArray());
     }
     else if (data_type == MESSAGE)
     {
         if (net_message.contains(TEXT_MESSAGES))
             this->m_db->insertValidTextMessagesList(net_message[TEXT_MESSAGES].toArray());
     }
-    else if (data_type == CHAT_CREATION_CONFIRMATION)
-    {
-        if(net_message[ENV_INFO][ENV_TYPE] == PRIVATE_CHAT)
-            this->validatePrivateChat(net_message[ENV_INFO].toObject());
-    }
-    else if (data_type == SEARCH_USERNAME_RESULT)
-    {
-        auto search_results = DataBase::convertToNormalForm(net_message[SEARCH_RESULT].toArray());
-        emit this->searchUsernameResultArrived(*search_results);
-    }
     else if (data_type == USER_INFO)
     {
         this->m_db->tryToInsertUser(net_message[USER_INFO].toObject());
     }
+    else
+        qDebug() << "Undefined received data type: " << data_type;
 }
 
 
 void DataHandler::registerAllPendingChats()
 {
     using namespace KeyWords;
-
     auto pendings = this->m_db->getAllPendingEnvs();
     for(const auto& env_info : (*pendings))
     {
@@ -103,9 +93,28 @@ void DataHandler::registerAllPendingChats()
     }
 }
 
-void DataHandler::registerAllMessages()
+void DataHandler::registerAllPendingMessages()
 {
 
+}
+
+void DataHandler::validatePrivateChat(const NetInfoContainer &valid_env_info,
+                                      const quint64& invalid_env_id)
+{
+    using namespace KeyWords;
+    this->m_db->insertValidPrivateEnv(valid_env_info);
+    this->m_db->deletePendingChat(invalid_env_id);
+    this->m_conversation_list_model->changeConversationToValid(invalid_env_id, valid_env_info[ENV_ID].toInteger());
+}
+
+void DataHandler::validateTextMessage(const NetInfoContainer &valid_message_info,
+                                      const quint64 &invalid_message_id)
+{
+    using namespace KeyWords;
+    this->m_db->insertValidTextMessage(valid_message_info);
+    this->m_db->deletePendingTextMessage(invalid_message_id);
+    this->m_conversation_list_model->considerNewValidatedTextMessage(valid_message_info, invalid_message_id);
+    this->m_message_list_model->considerNewTextMessage(valid_message_info);
 }
 
 
@@ -135,16 +144,6 @@ quint64 DataHandler::createNewPrivateChat(const quint64 &user_id, const QString 
                 );
     return invalid_id;
 }
-
-
-void DataHandler::validatePrivateChat(const NetInfoContainer &env_info)
-{
-    using namespace KeyWords;
-    this->m_db->insertValidPrivateEnv(env_info);
-    this->m_db->deletePendingChat(env_info[INVALID_ENV_ID].toInteger());
-    this->m_conversation_list_model->changeConversationToValid(env_info[INVALID_ENV_ID].toInteger());
-}
-
 
 
 void DataHandler::feedEnvMessagesToMessagesModel(const quint64 &env_id,
@@ -200,5 +199,10 @@ QString DataHandler::getProperConversationHeader(const quint64 &env_id,
 
     qDebug() << "wasn't private!";
     return QString();
+}
+
+quint64 DataHandler::insertPendingTextMessage(const quint64 &env_id, const bool &is_env_pending, const QString &message_text)
+{
+    return this->m_db->insertPendingTextMessage(env_id, message_text, is_env_pending);
 }
 

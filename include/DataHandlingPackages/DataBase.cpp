@@ -1,8 +1,10 @@
-﻿#include "DataBase.hpp"
-#include "../../KeyWords.hpp"
-#include <QMutex>
+﻿#include <QMutex>
 #include <QMutexLocker>
 #include <memory>
+
+#include "DataBase.hpp"
+#include "../../KeyWords.hpp"
+#include "../Others/CommonTools.hpp"
 
 static char data_path[] = "../data/";
 static char database_filename[] = "db.sqlite";
@@ -104,7 +106,7 @@ DataBase::insertValidTextMessagesList(const NetInfoCollection &messages)
 {
     using namespace KeyWords;
     QMutexLocker scoped_lock(&insert_lock);
-    auto messages_list = DataBase::convertToNormalForm(messages);
+    auto messages_list = convertToNormalForm(messages);
     for (auto itter = messages_list->begin(); itter < messages_list->end(); itter++)
         this->insertValidTextMessage(itter->toObject());
 }
@@ -113,8 +115,14 @@ DataBase::insertValidTextMessagesList(const NetInfoCollection &messages)
 void
 DataBase::deletePendingChat(const quint64 &invalid_id)
 {
-    this->execOtherQry(fmt::format("DELETE FROM pending_chat_envs"
-                                   " WHERE invalid_env_id={}", invalid_id).c_str());
+    this->execOtherQry(fmt::format("DELETE FROM pending_chat_envs "
+                                   "WHERE invalid_env_id={}", invalid_id).c_str());
+}
+
+void DataBase::deletePendingTextMessage(const quint64 &invalid_id)
+{
+    this->execOtherQry(fmt::format("DELETE FROM pending_text_messages "
+                                   "WHERE invalid_message_id={}", invalid_id).c_str());
 }
 
 
@@ -143,7 +151,7 @@ DataBase::insertValidPrivateEnv(const NetInfoContainer &env_info, bool participa
 }
 
 
-quint16
+quint64
 DataBase::insertPendingPrivateChat(const quint64 &user_id)
 {
     using namespace KeyWords;
@@ -152,12 +160,11 @@ DataBase::insertPendingPrivateChat(const quint64 &user_id)
                                    "VALUES('private_chat', {}, {});",
                                    this->m_user_info[USER_ID].toUInt(), user_id).c_str()
                        );
-    auto inserted_invalid_id = this->getLastInsertId();
-    return inserted_invalid_id;
+    return this->getLastInsertId();
 }
 
 
-quint16
+quint64
 DataBase::insertPendingTextMessage(const quint16 &env_id,
                                    const QString &message_text,
                                    const bool& to_pending_env)
@@ -169,8 +176,7 @@ DataBase::insertPendingTextMessage(const quint16 &env_id,
                                    id_field, env_id,
                                    toRaw(message_text.toStdString())).c_str()
                        );
-    auto inserted_id = getLastInsertId();
-    return inserted_id;
+    return getLastInsertId();
 }
 
 
@@ -253,7 +259,7 @@ InfoContainerPtr
 DataBase::getValidPrivateChatInfoByEnvId(const quint64 &env_id) const
 {
     return this->singleSELECT(fmt::format("SELECT * FROM private_chats "
-                                          "WHERE env_id = {}",
+                                          "WHERE env_id = {};",
                                           env_id).c_str());
 }
 
@@ -371,33 +377,6 @@ DataBase::isPendingPrivateChat(const quint64 &env_id) const
                                             "WHERE env_id={};", env_id).c_str())
             )->isEmpty();
 }
-
-
-
-void
-DataBase::convertToHash(InfoContainer &target,
-                        const QJsonObject &source)
-{
-    for (auto itter = source.constBegin(); itter < source.constEnd(); itter++)
-        target[itter.key()] = itter.value().toVariant();
-}
-
-
-NetInfoCollectionPtr
-DataBase::convertToNormalForm(const QJsonArray &data)
-{
-    auto target = std::make_shared<QJsonArray> ();
-    auto fields = data[0].toArray();
-    for (auto itter = data.constBegin() + 1; itter < data.constEnd(); itter++)
-    {
-        QJsonObject new_row;
-        const QJsonArray& data_row = itter->toArray();
-        for (uint8_t i = 0; i < fields.size(); i++)
-            new_row[fields[i].toString()] = data_row[i];
-        target->append(new_row);
-    }
-    return target;
-};
 
 
 

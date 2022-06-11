@@ -1,7 +1,7 @@
-import QtQuick 2.14
+import QtQuick 2.12
 import QtQuick.Controls 2.14
-import QtQuick.Window 2.14
-import QtQuick.Layouts 2.14
+import QtQuick.Window 2.12
+import QtQuick.Layouts 2.12
 
 import "MainEnvComponents/"
 //import "MainEnvComponents/MessagesList.qml"
@@ -11,11 +11,10 @@ Rectangle
 {
     property int user_id: -1
     color: "red"
-    NewChatDialog
+    MainSearchDialog
     {
-        id: newChatDialog
+        id: mainSearchDiolog
     }
-
     SplitView
     {
         anchors.fill: parent

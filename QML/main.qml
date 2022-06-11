@@ -1,6 +1,6 @@
-import QtQuick 2.14
-import QtQuick.Window 2.14
-import QtQuick.Controls 2.14
+import QtQuick 2.12
+import QtQuick.Window 2.12
+import QtQuick.Controls 2.12
 import "./MainEnvComponents/"
 
 ApplicationWindow
@@ -11,7 +11,7 @@ ApplicationWindow
     title: qsTr("PMessenger")
     Connections
     {
-        target: netConn
+        target: netHandler
         function onEntryNetMessageArrived(net_msg)
         {
             if (net_msg["successful"])

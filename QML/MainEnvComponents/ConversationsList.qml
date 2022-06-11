@@ -1,7 +1,7 @@
 import QtQuick 2.12
-import QtQuick.Controls 2.14
-import QtQuick.Window 2.14
-import QtQuick.Layouts 1.14
+import QtQuick.Controls 2.12
+import QtQuick.Window 2.12
+import QtQuick.Layouts 1.12
 import "../Dialogs/"
 import "../TinyComponents/"
 
@@ -36,7 +36,7 @@ Rectangle
             buttonColor: "#2b6aad"
             buttonEnteredColor: "#407dbd"
             buttonPressedColor: "#4c85c2"
-
+            onButtonClicked: mainSearchDiolog.open()
             Image
             {
                 id: searchButton
@@ -93,8 +93,8 @@ Rectangle
                         onClicked:
                         {
                             console.log("clicked on " + model.title)
-                            //                        mainApp.openExistingChatEnv(model.env_id, model.is_pending)
-                            //                        chatsModel.currChatIndex = model.index
+                            mainApp.openExistingChatEnv(model.env_id, model.is_pending)
+                            chatsModel.currChatIndex = model.index
                         }
                     }
                     Label

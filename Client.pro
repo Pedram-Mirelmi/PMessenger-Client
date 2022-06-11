@@ -18,6 +18,7 @@ SOURCES += \
     include/NetworkPackages/NetReceiver.cpp \
     include/NetworkPackages/NetSender.cpp \
     include/NetworkPackages/NetworkHandler.cpp \
+    include/Others/CommonTools.cpp \
     include/Others/stringTools.cpp \
     main.cpp
 
@@ -47,9 +48,11 @@ HEADERS += \
     include/NetworkPackages/NetReceiver.hpp \
     include/NetworkPackages/NetSender.hpp \
     include/NetworkPackages/NetworkHandler.hpp \
+    include/Others/CommonTools.hpp \
     include/Others/TypeDefs.hpp \
     include/Others/format.hpp \
     include/Others/stringTools.hpp \
     stringTools.hpp
 
-DISTFILES +=
+DISTFILES += \
+    todolist.txt

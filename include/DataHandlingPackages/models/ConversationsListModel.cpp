@@ -112,6 +112,12 @@ QHash<int, QByteArray> ConversationsListModel::roleNames() const
     return names;
 }
 
+void ConversationsListModel::considerNewValidatedTextMessage(const NetInfoContainer &valid_message_info,
+                                                             const quint64 &invalid_message_id)
+{
+    // TODO
+}
+
 void ConversationsListModel::sortConversations() // insertion sort
 {
     using namespace KeyWords;
@@ -152,10 +158,12 @@ void ConversationsListModel::tryToInsertConversation(const ConversatonItem &conv
     }
 }
 
-void ConversationsListModel::changeConversationToValid(const quint64 &invalid_id)
+void ConversationsListModel::changeConversationToValid(const quint64 &invalid_id,
+                                                       const quint64& new_valid_env_id)
 {
     auto index = this->searchFromTop(invalid_id, true);
     this->m_conversations[index].is_pending = false;
+    this->m_conversations[index].env_id = new_valid_env_id;
 }
 
 void ConversationsListModel::popUpConversation(const QJsonObject& new_inserted_msg)

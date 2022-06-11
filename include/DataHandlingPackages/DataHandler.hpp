@@ -38,8 +38,6 @@ public:
     void
     prepareDB();
 
-
-
 public slots:
     void
     handleNewData(const QJsonObject& net_message);
@@ -50,12 +48,16 @@ public slots:
 
 
     void
-    registerAllMessages();
+    registerAllPendingMessages();
 
+    void
+    validatePrivateChat(const NetInfoContainer& env_info,
+                        const quint64& invalid_env_id);
 
+    void
+    validateTextMessage(const NetInfoContainer& message_info,
+                        const quint64& invalid_message_id);
 public:
-
-
     void
     handleFetchResult(const QJsonObject& net_message);
 
@@ -63,9 +65,6 @@ public:
     quint64
     createNewPrivateChat(const quint64& user_id,
                          const QString& name);
-
-    void
-    validatePrivateChat(const NetInfoContainer& env_info);
 
 
     void
@@ -83,11 +82,11 @@ public:
                                 const bool& is_pending);
 
 
-signals:
-
-    void
-    searchUsernameResultArrived(const QJsonArray& search_result);
-
+protected:
+    quint64
+    insertPendingTextMessage(const quint64& env_id,
+                             const bool& is_env_pending,
+                             const QString& message_text);
 };
 
 

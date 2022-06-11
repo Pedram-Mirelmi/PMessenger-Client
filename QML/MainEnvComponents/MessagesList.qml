@@ -1,7 +1,7 @@
 import QtQuick 2.12
-import QtQuick.Controls 2.14
-import QtQuick.Window 2.14
-import QtQuick.Layouts 2.14
+import QtQuick.Controls 2.12
+import QtQuick.Window 2.12
+import QtQuick.Layouts 2.12
 import "../TinyComponents/"
 
 Rectangle
@@ -94,8 +94,8 @@ Rectangle
                 onButtonClicked:
                 {
                     console.log("user sent ", messageInputField.text)
-                    //                        newChatMsgSent(messageField.text, chatComp.env_id)
-                    //                        messageField.clear()
+//                    newChatMsgSent(messageField.text, chatComp.env_id)
+//                    messageField.clear()
                 }
                 Label
                 {

@@ -2,7 +2,7 @@ import QtQuick 2.14
 import QtQuick.Controls 2.14
 import QtQuick.Window 2.14
 import QtQuick.Layouts 1.14
-
+import "../TinyComponents/"
 Dialog
 {
     width: 400
@@ -10,13 +10,14 @@ Dialog
     background: Rectangle
     {
         anchors.fill: parent
-        color: "steelblue"
+        color: "#22548a"
     }
     Connections
     {
-        target: dataHolder
-        function onSearchUsernameResultArrived(search_result)
+        target: netHandler
+        function onUsernameSearchResultArrived(search_result)
         {
+            console.log("search result received!")
             for (let i = 0; i < search_result.length; i++)
             {
                 let user_info = search_result[i];
@@ -51,21 +52,25 @@ Dialog
                 {
                     text: "Search for a user"
                 }
-                TextField
+                SingleTextInput
                 {
                     id: searchField
                     width: parent.width
-                    placeholderText: "Enter a username here"
-                    font.pointSize: 15
+                    placeHolderString: "Enter a username here"
+                    fontPixelSize: 15
                 }
 
             }
 
-            Button
+            GeneralButton
             {
                 Layout.alignment: Qt.AlignCenter
-                text: "Search"
-                onClicked:
+                Label
+                {
+                    text: "Search"
+                    anchors.centerIn: parent
+                }
+                onButtonClicked:
                 {
                     resultListModel.clear()
                     netConn.sendUsernameSearchReq(searchField.text)

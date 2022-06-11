@@ -73,7 +73,7 @@ LOGINING:
     for now (this version) we just send the chat environments that user attends with basic informaions about them. next step client will ask for messages in environments with GET_ENV_MESSAGES
 
     request:    {NET_MESSAGE_TYPE: FETCH}
-    response:   {NET_MESSAGE_TYPE: DATA, DATA_TYPE: FETCH_RESULT, PRIVATE_CHATS: [...], GROUP_CHATS: [...], CHANNELS: [...], ...}
+    response:   {NET_MESSAGE_TYPE: DATA, DATA_TYPE: FETCH_RESULT, PRIVATE_CHATS: [[<ENV_ID>, <LAST_MESSAGE_ID>], ...], GROUP_CHATS: [[<ENV_ID>, <LAST_MESSAGE_ID>], ...], CHANNELS: [[<ENV_ID>, <LAST_MESSAGE_ID>], ...], ...}
 */
     constexpr auto FETCH = "fetch";
     constexpr auto DATA = "data";
@@ -87,8 +87,7 @@ LOGINING:
 /*
     GET_PRIVATE_ENV_DETAILS when client just knows that it attends in an env. now it want its details
     request:    {NET_MESSAGE_TYPE: GET_PRIVATE_ENV_DETAILS, ENV_ID: ...}
-    response1:  {NET_MESSAGE_TYPE: DATA, DATA_TYPE: PRIVATE_ENV_DETAILS, ENV_INFO: {..., OTHER_PERSON_ID: ...}, OTHER_PERSON_INFO: {...}}
-    response2:  sends env messages in "MESSAGE" shape
+    response:   {NET_MESSAGE_TYPE: DATA, DATA_TYPE: PRIVATE_ENV_DETAILS, ENV_INFO: {..., OTHER_PERSON_ID: ...}, OTHER_PERSON_INFO: {...}}
 */
     constexpr auto GET_PRIVATE_ENV_DETAILS = "get_private_env_details";
     constexpr auto PRIVATE_ENV_DETAILS = "private_env_details";
@@ -118,37 +117,34 @@ LOGINING:
 /*
     SEARCH_USERNAME when user search for another user to start a new conversation with
     request:    {NET_MESSAGE_TYPE: SEARCH_USERNAME, USERNAME_TO_SEARCH: ...}
-    response:   {NET_MESSAGE_TYPE: USER_SEARCH_RESULT, SEARCH_RESULT: [...]}
+    response:   {NET_MESSAGE_TYPE: USERNAME_SEARCH_RESULT, SEARCH_RESULT: [...]}
 */
     constexpr auto SEARCH_USERNAME = "search_username";
     constexpr auto USERNAME_TO_SEARCH = "username_to_search";
-    constexpr auto SEARCH_USERNAME_RESULT = "search_username_result";
+    constexpr auto USERNAME_SEARCH_RESULT = "username_search_result";
     constexpr auto SEARCH_RESULT = "search_result";
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
     CREATE_NEW_PRIVATE_CHAT when user wants to start a new conversation with another using their user_id (got by SEARCH_USERNAME earlier)
     request:    {NET_MESSAGE_TYPE: CREATE_NEW_PRIVATE_CHAT, INVALID_ENV_ID: ..., user_id: ...}
-    response:   {NET_MESSAGE_TYPE: DATA, DATA_TYPE: CHAT_CREATION_CONFIRMATION, ENV_INFO: {ENV_TYPE: PRIVATE_CHAT, INVALID_ENV_ID: ..., env_id: ...} }
+    response:   {NET_MESSAGE_TYPE: CHAT_CREATION_CONFIRMATION, INVALID_ENV_ID: ..., ENV_INFO: {}}
 
 */
     constexpr auto CREATE_NEW_PRIVATE_CHAT = "create_new_private_chat";
     constexpr auto INVALID_ENV_ID = "invalid_env_id";
-    constexpr auto CHAT_CREATION_CONFIRMATION = "chat_creation_confirmation";
-    constexpr auto ENV_TYPE = "env_type";
-    constexpr auto PRIVATE_CHAT = "private_chat";
+    constexpr auto PRIVATE_CHAT_CREATION_CONFIRMATION = "private_chat_creation_confirmation";
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
     NEW_TEXT_MESSAGE when user sends a new message on an "env_id" chat environment
     request:    {NET_MESSAGE_TYPE: NEW_TEXT_MESSAGE, MESSAGE_TEXT: ..., INVALID_MESSAGE_ID: ..., env_id: ...}
-    response:   {NET_MESSAGE_TYPE: DATA, DATA_TYPE: MESSAGE_SENT_CONFIRMAION, MESSAGE_INFO: {...}}
+    response:   {NET_MESSAGE_TYPE: TEXT_MESSAGE_SENT_CONFIRMATION, INVALID_MESSAGE_ID: ..., MESSAGE_INFO: {...}}
 */
     constexpr auto NEW_TEXT_MESSAGE = "new_text_message";
     constexpr auto MESSAGE_TEXT = "message_text";
     constexpr auto INVALID_MESSAGE_ID = "invalid_message_id";
     constexpr auto MESSAGE_INFO = "message_info";
-    constexpr auto MESSAGE_SENT_CONFIRMATION = "message_sent_confirmation";
-    constexpr auto TEXT_MESSAGE = "text_message";
+    constexpr auto TEXT_MESSAGE_SENT_CONFIRMATION = "text_message_sent_confirmation";
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*

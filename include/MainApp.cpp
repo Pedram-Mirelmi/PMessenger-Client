@@ -1,5 +1,5 @@
 #include "MainApp.hpp"
-
+#include "./Others/CommonTools.hpp"
 
 MainApp::MainApp(QQmlApplicationEngine& qml_engine,
                  QObject *parent,
@@ -10,17 +10,24 @@ MainApp::MainApp(QQmlApplicationEngine& qml_engine,
       m_data_handler(new DataHandler(nullptr, this->m_network_handler, this->m_user_info))
 {
 
+
+    qml_engine.rootContext()->setContextProperty("messagesModel", this->m_data_handler->m_message_list_model);
+    qml_engine.rootContext()->setContextProperty("chatsModel", this->m_data_handler->m_conversation_list_model);
+    qml_engine.rootContext()->setContextProperty("netHandler", this->m_network_handler);
+    qml_engine.rootContext()->setContextProperty("dataHandler", this->m_data_handler);
+    qml_engine.rootContext()->setContextProperty("db", this->m_data_handler->m_db);
+
     QObject::connect(this->m_network_handler, &NetworkHandler::newDataArrived,
                      this->m_data_handler, &DataHandler::handleNewData, Qt::UniqueConnection);
 
     QObject::connect(this->m_network_handler, &NetworkHandler::entrySuccessful,
                      this, &MainApp::initiateApp, Qt::UniqueConnection);
 
-    qml_engine.rootContext()->setContextProperty("messagesModel", this->m_data_handler->m_message_list_model);
-    qml_engine.rootContext()->setContextProperty("chatsModel", this->m_data_handler->m_conversation_list_model);
-    qml_engine.rootContext()->setContextProperty("netConn", this->m_network_handler);
-    qml_engine.rootContext()->setContextProperty("dataHolder", this->m_data_handler);
-    qml_engine.rootContext()->setContextProperty("db", this->m_data_handler->m_db);
+    QObject::connect(this->m_network_handler, &NetworkHandler::serverConfirmedPrivateChatCreation,
+                     this->m_data_handler, &DataHandler::validatePrivateChat);
+    QObject::connect(this->m_network_handler, &NetworkHandler::serverConfirmedTextMessageCreation,
+                     this->m_data_handler, &DataHandler::validateTextMessage);
+
 }
 
 // Q_INVOKABLE
@@ -53,16 +60,20 @@ void MainApp::openExistingChatEnv(const quint64 &env_id, const bool &is_pending)
 // Q_INVOKABLE
 void MainApp::sendNewTextMessage(const quint64 &env_id,
                                  const QString &message_text,
-                                 const bool &to_pending)
+                                 const bool &is_env_pending)
 {
-
+    quint64 invalid_id = this->m_data_handler->insertPendingTextMessage(env_id, is_env_pending, message_text);
+    if(!is_env_pending)
+    {
+        this->m_network_handler->sendNewTextMessageReq(env_id, message_text, invalid_id);
+    }
 }
 
 void MainApp::initiateApp(const QJsonObject &net_msg)
 {
-    this->m_data_handler->m_db->convertToHash(this->m_user_info, net_msg[KeyWords::USER_INFO].toObject());
+    convertToHash(this->m_user_info, net_msg[KeyWords::USER_INFO].toObject());
     this->m_data_handler->prepareDB();
     this->m_data_handler->fillConversationListModel();
     this->m_data_handler->registerAllPendingChats();
-    this->m_data_handler->registerAllMessages();
+    this->m_data_handler->registerAllPendingMessages();
 }

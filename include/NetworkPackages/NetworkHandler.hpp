@@ -70,4 +70,7 @@ signals:
     void newDataArrived(const QJsonObject& msg);
     void entryNetMessageArrived(const QJsonObject& msg);
     void newChatCreationMsgArrived(const QJsonObject& msg);
+    void usernameSearchResultArrived(const QJsonArray& results);
+    void serverConfirmedPrivateChatCreation(const QJsonObject& env_info, const quint64& invalid_env_id);
+    void serverConfirmedTextMessageCreation(const QJsonObject& message_info, const quint64& invalid_message_id);
 };

@@ -6,7 +6,7 @@
         <file>QML/MainEnv.qml</file>
         <file>QML/MainEnvComponents/ConversationsList.qml</file>
         <file>QML/MainEnvComponents/MessagesList.qml</file>
-        <file>QML/Dialogs/NewChatDialog.qml</file>
+        <file>QML/Dialogs/MainSearchDialog.qml</file>
         <file>images/AppBackground.jpg</file>
         <file>images/disconnected.png</file>
         <file>images/connected.png</file>

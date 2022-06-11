@@ -1,7 +1,9 @@
-import QtQuick 2.14
-import QtQuick.Controls 2.14
-import QtQuick.Layouts 1.14
+import QtQuick 2.12
+import QtQuick.Controls 2.12
+import QtQuick.Layouts 2.12
+
 import "./TinyComponents/"
+
 Rectangle
 {
     id: introEnv
@@ -15,8 +17,8 @@ Rectangle
     {
         id: title
         text: "PMessenger!"
-        font.pointSize: parent.height / 15
-        color: Qt.color("#5ca3ab")
+        font.pixelSize: parent.height / 10
+        color: "#5ca3ab"
         anchors
         {
             top: parent.top
@@ -32,8 +34,8 @@ Rectangle
         anchors.centerIn: parent
         Label
         {
-            text: netConn.netConnected ? "All Good!" : "Connecting ..."
-            color: Qt.color("#5c9196")
+            text: netHandler.netConnected ? "All Good!" : "Connecting ..."
+            color: "#5c9196"
             Layout.alignment: Qt.AlignHCenter
             font.pixelSize: 2*title.font.pixelSize/3
         }
@@ -101,7 +103,7 @@ Rectangle
                 {
                     anchors.centerIn: parent
                     color: "white"
-                    text: "Login"
+                    text: "Register"
                 }
 
             }
@@ -118,7 +120,7 @@ Rectangle
         {
             id: icon
             anchors.fill: parent
-            source: netConn.netConnected ? "qrc:/images/connected.png" : "qrc:/images/disconnected.png"
+            source: netHandler.netConnected ? "qrc:/images/connected.png" : "qrc:/images/disconnected.png"
         }
     }
 }

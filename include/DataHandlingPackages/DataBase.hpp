@@ -56,17 +56,19 @@ public:
     void
     deletePendingChat(const quint64& invalid_id);
 
+    void
+    deletePendingTextMessage(const quint64& invalid_id);
 
     void
     insertValidPrivateEnv(const NetInfoContainer& env_info,
                           bool participates = true);
 
 
-    quint16
+    quint64
     insertPendingPrivateChat(const quint64& user_id);
 
 
-    quint16
+    quint64
     insertPendingTextMessage(const quint16& env_id,
                              const QString& message_text,
                              const bool& to_pending_env);
@@ -146,14 +148,6 @@ public:
     isPendingPrivateChat(const quint64& env_id) const;
 
 private:
-    static void
-    convertToHash(InfoContainer &target,
-                  const QJsonObject &source);
-
-
-    static NetInfoCollectionPtr
-    convertToNormalForm(const QJsonArray& data);
-
 
     InfoCollectionPtr
     SELECT(const char query_str[]) const;

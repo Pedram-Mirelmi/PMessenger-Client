@@ -4,6 +4,7 @@
 #include <QJsonObject>
 #include <QThread>
 #include <future>
+#include "../Others/CommonTools.hpp"
 
 // constructor
 NetworkHandler::NetworkHandler(QObject *parent,
@@ -143,13 +144,27 @@ void NetworkHandler::connectToServer()
 void NetworkHandler::handleNewNetMessage(const QJsonObject &net_msg)
 {
     using namespace KeyWords;
-    if (net_msg[NET_MESSAGE_TYPE] == REGISTER_RESULT
-            || net_msg[NET_MESSAGE_TYPE] == LOGIN_RESULT)
+    auto msg_type = net_msg[NET_MESSAGE_TYPE].toString();
+    if (msg_type == REGISTER_RESULT
+        || net_msg[NET_MESSAGE_TYPE] == LOGIN_RESULT)
     {
         emit this->entryNetMessageArrived(net_msg);
         if (net_msg[SUCCESSFUL].toBool())
             emit this->entrySuccessful(net_msg);
         return;
+    }
+    if (msg_type == USERNAME_SEARCH_RESULT)
+    {
+        auto search_results = convertToNormalForm(net_msg[SEARCH_RESULT].toArray());
+        emit this->usernameSearchResultArrived(*search_results);
+    }
+    if (msg_type == PRIVATE_CHAT_CREATION_CONFIRMATION)
+    {
+        emit this->serverConfirmedPrivateChatCreation(net_msg[ENV_INFO].toObject(), net_msg[INVALID_ENV_ID].toInteger());
+    }
+    if (msg_type == TEXT_MESSAGE_SENT_CONFIRMATION)
+    {
+        emit this->serverConfirmedTextMessageCreation(net_msg[MESSAGE_INFO].toObject(), net_msg[INVALID_MESSAGE_ID].toInteger());
     }
     if (net_msg[NET_MESSAGE_TYPE] == DATA)
     {

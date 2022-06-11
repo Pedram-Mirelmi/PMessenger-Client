@@ -37,3 +37,4 @@ build/
 *.sqlite
 data/*.sqlite
 *test*
+todolist.txt
