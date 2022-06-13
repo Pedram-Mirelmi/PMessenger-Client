@@ -17,17 +17,17 @@ MainApp::MainApp(QQmlApplicationEngine& qml_engine,
     qml_engine.rootContext()->setContextProperty("dataHandler", this->m_data_handler);
     qml_engine.rootContext()->setContextProperty("db", this->m_data_handler->m_db);
 
-//    QObject::connect(this->m_network_handler, &NetworkHandler::newDataArrived,
-//                     this->m_data_handler, &DataHandler::handleNewData, Qt::UniqueConnection);
+    QObject::connect(this->m_network_handler, &NetworkHandler::newDataArrived,
+                     this->m_data_handler, &DataHandler::handleNewData, Qt::UniqueConnection);
 
-//    QObject::connect(this->m_network_handler, &NetworkHandler::entrySuccessful,
-//                     this, &MainApp::initiateApp, Qt::UniqueConnection);
+    QObject::connect(this->m_network_handler, &NetworkHandler::entrySuccessful,
+                     this, &MainApp::initiateApp, Qt::UniqueConnection);
 
-//    QObject::connect(this->m_network_handler, &NetworkHandler::serverConfirmedPrivateChatCreation,
-//                     this->m_data_handler, &DataHandler::validatePrivateChat);
+    QObject::connect(this->m_network_handler, &NetworkHandler::serverConfirmedPrivateChatCreation,
+                     this->m_data_handler, &DataHandler::validatePrivateChat);
 
-//    QObject::connect(this->m_network_handler, &NetworkHandler::serverConfirmedTextMessageCreation,
-//                     this->m_data_handler, &DataHandler::validateTextMessage);
+    QObject::connect(this->m_network_handler, &NetworkHandler::serverConfirmedTextMessageCreation,
+                     this->m_data_handler, &DataHandler::validateTextMessage);
 
 }
 

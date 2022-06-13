@@ -22,33 +22,33 @@ NetworkHandler::NetworkHandler(QObject *parent,
     this->m_sender->moveToThread(this->m_network_thread);
     this->m_network_thread->start();
 
-//    QObject::connect(this->m_socket, &QTcpSocket::disconnected,
-//                     this->m_receiver, &NetMessageReceiver::stopListening,
-//                     (Qt::ConnectionType)(Qt::QueuedConnection | Qt::UniqueConnection));
+    QObject::connect(this->m_socket, &QTcpSocket::disconnected,
+                     this->m_receiver, &NetMessageReceiver::stopListening,
+                     (Qt::ConnectionType)(Qt::QueuedConnection | Qt::UniqueConnection));
 
-//    QObject::connect(this->m_socket, &QTcpSocket::connected,
-//                     this->m_receiver, &NetMessageReceiver::startListening,
-//                     (Qt::ConnectionType)(Qt::QueuedConnection | Qt::UniqueConnection));
+    QObject::connect(this->m_socket, &QTcpSocket::connected,
+                     this->m_receiver, &NetMessageReceiver::startListening,
+                     (Qt::ConnectionType)(Qt::QueuedConnection | Qt::UniqueConnection));
 
-//    QObject::connect(this->m_receiver, &NetMessageReceiver::newNetMessageArrived,
-//                     this, &NetworkHandler::handleNewNetMessage,
-//                     (Qt::ConnectionType)(Qt::QueuedConnection | Qt::UniqueConnection));
+    QObject::connect(this->m_receiver, &NetMessageReceiver::newNetMessageArrived,
+                     this, &NetworkHandler::handleNewNetMessage,
+                     (Qt::ConnectionType)(Qt::QueuedConnection | Qt::UniqueConnection));
 
-//    QObject::connect(this->m_socket, &QTcpSocket::stateChanged,
-//                     [&](const QTcpSocket::SocketState& new_state)
-//                     {
-//                         static unsigned long tries_count = 0;
-//                         qDebug() << new_state;
-//                         if(new_state == QTcpSocket::SocketState::ConnectedState)
-//                             emit this->netConnectedChanged(true);
-//                         else if(new_state == QTcpSocket::SocketState::UnconnectedState)
-//                         {
-//                             emit this->netConnectedChanged(false);
-//                             qDebug() << "not connected... trying ..." << tries_count++;
-//                             QTimer::singleShot(500, this, &NetworkHandler::connectToServer);
-//                         }
-//                     }
-//    );
+    QObject::connect(this->m_socket, &QTcpSocket::stateChanged,
+                     [&](const QTcpSocket::SocketState& new_state)
+                     {
+                         static unsigned long tries_count = 0;
+                         qDebug() << new_state;
+                         if(new_state == QTcpSocket::SocketState::ConnectedState)
+                             emit this->netConnectedChanged(true);
+                         else if(new_state == QTcpSocket::SocketState::UnconnectedState)
+                         {
+                             emit this->netConnectedChanged(false);
+                             qDebug() << "not connected... trying ..." << tries_count++;
+                             QTimer::singleShot(500, this, &NetworkHandler::connectToServer);
+                         }
+                     }
+    );
 
     this->connectToServer();
 }
