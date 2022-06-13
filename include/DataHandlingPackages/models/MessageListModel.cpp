@@ -12,6 +12,13 @@ MessageListModel::MessageListModel(QObject *parent)
     : QAbstractListModel(parent),
       m_messages(std::make_shared<InfoCollection>())
 {
+    using namespace KeyWords;
+//    InfoContainer msg1, msg2;
+//    msg1[MESSAGE_TEXT] = "Hiiiii";
+//    msg2[MESSAGE_TEXT] = "heeeey";
+
+//    this->m_messages->append(msg1);
+//    m_messages->append(msg2);
 }
 
 int MessageListModel::rowCount(const QModelIndex &parent) const
@@ -84,7 +91,9 @@ QHash<int, QByteArray> MessageListModel::roleNames() const
     QHash<int, QByteArray> names;
     names[Roles::message_id] = MESSAGE_ID;
     names[Roles::owner_id] = OWNER_ID;
-//    names[Roles::message_type] = MESSAGE_TYPE;
+    names[Roles::message_text] = MESSAGE_TEXT;
+    names[Roles::message_type] = MESSAGE_TYPE;
+    names[Roles::is_pending] = IS_PENDING;
     return names;
 };
 
@@ -113,20 +122,30 @@ void MessageListModel::insertMessages(QVector<InfoContainer> &msg_list)
         this->insertMessage(msg_info);
 }
 
-void MessageListModel::considerNewTextMessage(const QJsonObject &msg_info)
+void MessageListModel::considerNewTextMessage(const InfoContainer &msg_info)
 {
     using namespace KeyWords;
-    if ((quint64)msg_info[ENV_ID].toInteger() == this->current_env_id)
+    if (msg_info.contains(IS_PENDING) && msg_info[IS_PENDING].toBool())
+        this->insertMessage(msg_info);
+    else if ((quint64)msg_info[ENV_ID].toUInt() == this->current_env_id)
     {
-        InfoContainer model_std_container;
-        this->convertToHash(model_std_container, msg_info);
-        this->insertMessage(model_std_container);
+        qint32 msg_index = this->m_messages->lastIndexOf(msg_info[ENV_ID].toUInt());
+        if(msg_index == -1)
+        {
+            this->insertMessage(msg_info);
+            return;
+        }
+        (*m_messages)[msg_index][IS_PENDING] = true;
+        emit this->dataChanged(this->index(msg_index), this->index(msg_index), QVector<int>() << Roles::is_pending);
     }
+
 }
 
 void MessageListModel::clearModel()
 {
-
+    this->beginResetModel();
+    this->m_messages->clear();
+    this->endResetModel();
 }
 
 void MessageListModel::sortMessages() // insertion sort
@@ -143,18 +162,20 @@ void MessageListModel::sortMessages() // insertion sort
     }
 }
 
-void MessageListModel::convertToHash(InfoContainer &target, const QJsonObject &source) // in place
+InfoContainer MessageListModel::convertToHash(const QJsonObject &source)
 {
+    InfoContainer target;
     for (const auto& key : source.keys())
         target[key.toStdString().c_str()] = source[key].toVariant();
+    return target;
 }
 
 void MessageListModel::swapItems(const quint64 &first, const quint64 &second)
 {
     this->m_messages->swapItemsAt(first, second);
-    emit this->dataChanged(this->index(first, 0), this->index(first, 0),
+    emit this->dataChanged(this->index(first), this->index(first),
                            QVector<int>() << Roles::message_id << Roles::owner_id << Roles::message_type);
-    emit this->dataChanged(this->index(second, 0), this->index(second, 0),
+    emit this->dataChanged(this->index(second), this->index(second),
                            QVector<int>() << Roles::message_id << Roles::owner_id << Roles::message_type);
 }
 

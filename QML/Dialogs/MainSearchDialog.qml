@@ -5,6 +5,7 @@ import QtQuick.Layouts 1.14
 import "../TinyComponents/"
 Dialog
 {
+    id: mainSearchDiolog
     width: 400
     height: 600
     background: Rectangle
@@ -73,7 +74,7 @@ Dialog
                 onButtonClicked:
                 {
                     resultListModel.clear()
-                    netConn.sendUsernameSearchReq(searchField.text)
+                    netHandler.sendUsernameSearchReq(searchField.text)
                 }
             }
             Frame
@@ -128,7 +129,7 @@ Dialog
                                                         "username": model.username,
                                                         "name": model.name})
                                     mainApp.openPrivateChatWith(model.user_id, model.name)
-                                    newChatDialog.close()
+                                    mainSearchDiolog.close()
                                 }
                             }
                         }

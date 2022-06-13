@@ -12,8 +12,12 @@ std::string toRaw(const std::string &str)
         case '\n':
             s << "\\n";
             break;
+        case '\'':
+            s << "\\'";
+            break;
         default:
             s << chr;
+            break;
         }
     return s.str();
 }

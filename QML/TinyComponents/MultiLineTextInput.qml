@@ -13,6 +13,10 @@ Rectangle
     property int fontPixelSize: textArea.font.pixelSize
     property string text: textArea.text
     color: backGroundColor
+    function clear()
+    {
+        textArea.clear()
+    }
 
     MouseArea
     {

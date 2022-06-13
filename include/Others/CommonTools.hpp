@@ -4,9 +4,8 @@
 #include <QJsonArray>
 
 
-void
-convertToHash(InfoContainer &target,
-              const QJsonObject &source);
+InfoContainer
+convertToHash(const NetInfoContainer &source);
 
 
 NetInfoCollectionPtr

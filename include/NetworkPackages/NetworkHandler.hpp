@@ -9,6 +9,7 @@
 #include <QTimer>
 #include "../NetworkPackages/NetReceiver.hpp"
 #include "../NetworkPackages/NetSender.hpp"
+#include "../Others/TypeDefs.hpp"
 
 class MainApp;
 
@@ -71,6 +72,6 @@ signals:
     void entryNetMessageArrived(const QJsonObject& msg);
     void newChatCreationMsgArrived(const QJsonObject& msg);
     void usernameSearchResultArrived(const QJsonArray& results);
-    void serverConfirmedPrivateChatCreation(const QJsonObject& env_info, const quint64& invalid_env_id);
-    void serverConfirmedTextMessageCreation(const QJsonObject& message_info, const quint64& invalid_message_id);
+    void serverConfirmedPrivateChatCreation(const InfoContainer& env_info);
+    void serverConfirmedTextMessageCreation(const InfoContainer& message_info);
 };

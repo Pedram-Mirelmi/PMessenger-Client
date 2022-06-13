@@ -53,16 +53,22 @@ QVariant ConversationsListModel::data(const QModelIndex &index, int role) const
     if (!index.isValid())
         return QVariant();
 
+    quint64 ab = 1;
+    QVariant aaa(ab);
     switch (role)
     {
-    case ConversationsListModel::Roles::env_id:
-        return this->m_conversations[index.row()].env_id;
-    case ConversationsListModel::Roles::title:
-        return this->m_conversations[index.row()].title;
-    case ConversationsListModel::Roles::is_pending:
-        return this->m_conversations[index.row()].is_pending;
-    case ConversationsListModel::Roles::last_message_id:
-        return this->m_conversations[index.row()].last_message_id;
+        case ConversationsListModel::Roles::env_id:
+            {
+                qDebug() << index.row();
+                qDebug() << this->m_conversations[index.row()].env_id;
+                return  this->m_conversations[index.row()].env_id;
+            }
+        case ConversationsListModel::Roles::title:
+            return this->m_conversations[index.row()].title;
+        case ConversationsListModel::Roles::is_pending:
+            return this->m_conversations[index.row()].is_pending;
+        case ConversationsListModel::Roles::last_message_id:
+            return this->m_conversations[index.row()].last_message_id;
     }
 
     return QVariant();
@@ -112,8 +118,7 @@ QHash<int, QByteArray> ConversationsListModel::roleNames() const
     return names;
 }
 
-void ConversationsListModel::considerNewValidatedTextMessage(const NetInfoContainer &valid_message_info,
-                                                             const quint64 &invalid_message_id)
+void ConversationsListModel::considerNewTextMessage(const InfoContainer &valid_message_info)
 {
     // TODO
 }
@@ -140,7 +145,7 @@ void ConversationsListModel::appendConversation(const ConversatonItem &conversat
                           this->m_conversations.size());
     this->m_conversations.append(conversation);
     this->endInsertRows();
-}
+    }
 
 void ConversationsListModel::tryToInsertConversation(const ConversatonItem &conversation)
 {
@@ -183,12 +188,12 @@ void ConversationsListModel::popUpConversation(const QJsonObject& new_inserted_m
     //    }
 }
 
-void ConversationsListModel::addNewPrivateEnv(const NetInfoContainer &new_env_info,
+void ConversationsListModel::addNewPrivateEnv(const InfoContainer &new_env_info,
                                               const QString& env_title,
                                               const quint64& last_msg_id)
 {
     using namespace KeyWords;
-    this->appendConversation(ConversatonItem(new_env_info[ENV_ID].toInteger(),
+    this->appendConversation(ConversatonItem(new_env_info[ENV_ID].toUInt(),
                                                   false, env_title, last_msg_id));
 }
 

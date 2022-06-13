@@ -51,12 +51,10 @@ public slots:
     registerAllPendingMessages();
 
     void
-    validatePrivateChat(const NetInfoContainer& env_info,
-                        const quint64& invalid_env_id);
+    validatePrivateChat(const InfoContainer& env_info);
 
     void
-    validateTextMessage(const NetInfoContainer& message_info,
-                        const quint64& invalid_message_id);
+    validateTextMessage(const InfoContainer& message_info);
 public:
     void
     handleFetchResult(const QJsonObject& net_message);

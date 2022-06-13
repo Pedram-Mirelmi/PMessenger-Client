@@ -22,33 +22,33 @@ NetworkHandler::NetworkHandler(QObject *parent,
     this->m_sender->moveToThread(this->m_network_thread);
     this->m_network_thread->start();
 
-    QObject::connect(this->m_socket, &QTcpSocket::disconnected,
-                     this->m_receiver, &NetMessageReceiver::stopListening,
-                     (Qt::ConnectionType)(Qt::QueuedConnection | Qt::UniqueConnection));
+//    QObject::connect(this->m_socket, &QTcpSocket::disconnected,
+//                     this->m_receiver, &NetMessageReceiver::stopListening,
+//                     (Qt::ConnectionType)(Qt::QueuedConnection | Qt::UniqueConnection));
 
-    QObject::connect(this->m_socket, &QTcpSocket::connected,
-                     this->m_receiver, &NetMessageReceiver::startListening,
-                     (Qt::ConnectionType)(Qt::QueuedConnection | Qt::UniqueConnection));
+//    QObject::connect(this->m_socket, &QTcpSocket::connected,
+//                     this->m_receiver, &NetMessageReceiver::startListening,
+//                     (Qt::ConnectionType)(Qt::QueuedConnection | Qt::UniqueConnection));
 
-    QObject::connect(this->m_receiver, &NetMessageReceiver::newNetMessageArrived,
-                     this, &NetworkHandler::handleNewNetMessage,
-                     (Qt::ConnectionType)(Qt::QueuedConnection | Qt::UniqueConnection));
+//    QObject::connect(this->m_receiver, &NetMessageReceiver::newNetMessageArrived,
+//                     this, &NetworkHandler::handleNewNetMessage,
+//                     (Qt::ConnectionType)(Qt::QueuedConnection | Qt::UniqueConnection));
 
-    QObject::connect(this->m_socket, &QTcpSocket::stateChanged,
-                     [&](const QTcpSocket::SocketState& new_state)
-                     {
-                         static unsigned long tries_count = 0;
-                         qDebug() << new_state;
-                         if(new_state == QTcpSocket::SocketState::ConnectedState)
-                             emit this->netConnectedChanged(true);
-                         else if(new_state == QTcpSocket::SocketState::UnconnectedState)
-                         {
-                             emit this->netConnectedChanged(false);
-                             qDebug() << "not connected... trying ..." << tries_count++;
-                             QTimer::singleShot(500, this, &NetworkHandler::connectToServer);
-                         }
-                     }
-    );
+//    QObject::connect(this->m_socket, &QTcpSocket::stateChanged,
+//                     [&](const QTcpSocket::SocketState& new_state)
+//                     {
+//                         static unsigned long tries_count = 0;
+//                         qDebug() << new_state;
+//                         if(new_state == QTcpSocket::SocketState::ConnectedState)
+//                             emit this->netConnectedChanged(true);
+//                         else if(new_state == QTcpSocket::SocketState::UnconnectedState)
+//                         {
+//                             emit this->netConnectedChanged(false);
+//                             qDebug() << "not connected... trying ..." << tries_count++;
+//                             QTimer::singleShot(500, this, &NetworkHandler::connectToServer);
+//                         }
+//                     }
+//    );
 
     this->connectToServer();
 }
@@ -160,11 +160,11 @@ void NetworkHandler::handleNewNetMessage(const QJsonObject &net_msg)
     }
     if (msg_type == PRIVATE_CHAT_CREATION_CONFIRMATION)
     {
-        emit this->serverConfirmedPrivateChatCreation(net_msg[ENV_INFO].toObject(), net_msg[INVALID_ENV_ID].toInteger());
+        emit this->serverConfirmedPrivateChatCreation(convertToHash(net_msg[ENV_INFO].toObject()));
     }
     if (msg_type == TEXT_MESSAGE_SENT_CONFIRMATION)
     {
-        emit this->serverConfirmedTextMessageCreation(net_msg[MESSAGE_INFO].toObject(), net_msg[INVALID_MESSAGE_ID].toInteger());
+        emit this->serverConfirmedTextMessageCreation(convertToHash(net_msg[MESSAGE_INFO].toObject()));
     }
     if (net_msg[NET_MESSAGE_TYPE] == DATA)
     {
@@ -187,7 +187,9 @@ void NetworkHandler::sendEnvMessagesReq(const quint64 &env_id, const quint64 &la
     using namespace KeyWords;
     QJsonObject req;
     req[NET_MESSAGE_TYPE] = GET_PRIVATE_ENV_MESSAGES;
-//    req[NE]
+    req[ENV_ID] = (qint64)env_id;
+    req[LAST_MESSAGE_CLIENT_HAS] = (qint64)last_message_we_have;
+    this->m_sender->sendNetMessage(req);
 }
 
 void NetworkHandler::sendUserInfoReq(const quint64 &user_id)

@@ -5,10 +5,12 @@ import "./MainEnvComponents/"
 
 ApplicationWindow
 {
+    id: mainWindow
     width: 1080
     height: 720
     visible: true
     title: qsTr("PMessenger")
+    property int user_id: 0
     Connections
     {
         target: netHandler
@@ -18,6 +20,7 @@ ApplicationWindow
             {
                 mainEnv.visible = true
                 introEnv.destroy()
+                mainWindow.user_id = net_msg["user_info"]["user_id"]
             }
         }
     }
@@ -26,7 +29,7 @@ ApplicationWindow
     MainEnv
     {
         id: mainEnv
-        visible: true
+        visible: false
         anchors.fill: parent
     }
 

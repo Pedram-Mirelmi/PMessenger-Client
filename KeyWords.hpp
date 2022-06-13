@@ -18,7 +18,6 @@ namespace KeyWords
 // tables keywords
     constexpr auto FIRST_PERSON = "first_person";
     constexpr auto SECOND_PERSON = "second_person";
-    constexpr auto OTHER_PERSON = "other_person";
     constexpr auto USERNAME = "username";
     constexpr auto PASSWORD = "password";
     constexpr auto NAME = "name";
@@ -91,7 +90,7 @@ LOGINING:
 */
     constexpr auto GET_PRIVATE_ENV_DETAILS = "get_private_env_details";
     constexpr auto PRIVATE_ENV_DETAILS = "private_env_details";
-    constexpr auto TEXT_MESSAGES = "";
+    constexpr auto TEXT_MESSAGES = "text_messages";
     constexpr auto ENV_INFO = "env_info";
     constexpr auto OTHER_PERSON_INFO = "other_person_info";
     constexpr auto OTHER_PERSON_ID = "other_person_id";
@@ -128,7 +127,7 @@ LOGINING:
 /*
     CREATE_NEW_PRIVATE_CHAT when user wants to start a new conversation with another using their user_id (got by SEARCH_USERNAME earlier)
     request:    {NET_MESSAGE_TYPE: CREATE_NEW_PRIVATE_CHAT, INVALID_ENV_ID: ..., user_id: ...}
-    response:   {NET_MESSAGE_TYPE: CHAT_CREATION_CONFIRMATION, INVALID_ENV_ID: ..., ENV_INFO: {}}
+    response:   {NET_MESSAGE_TYPE: PRIVATE_CHAT_CREATION_CONFIRMATION, INVALID_ENV_ID: ..., ENV_INFO: {}}
 
 */
     constexpr auto CREATE_NEW_PRIVATE_CHAT = "create_new_private_chat";

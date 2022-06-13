@@ -1,11 +1,10 @@
 ﻿#include <QMutex>
 #include <QMutexLocker>
 #include <memory>
-
 #include "DataBase.hpp"
 #include "../../KeyWords.hpp"
+#include "../ClientKeywords.hpp"
 #include "../Others/CommonTools.hpp"
-
 static char data_path[] = "../data/";
 static char database_filename[] = "db.sqlite";
 static char sql_codes_filename[] = "SqliteQueries.sql";
@@ -38,8 +37,8 @@ DataBase::tryToInit()
 {
     using namespace KeyWords;
     QFile file;
-    qDebug() << QDir::currentPath();
-    qDebug() << QString(data_path) + this->m_user_info[USERNAME].toString() + ".sqlite";
+//    qDebug() << QDir::currentPath();
+//    qDebug() << QString(data_path) + this->m_user_info[USERNAME].toString() + ".sqlite";
     if (!file.exists(QString(data_path) + this->m_user_info[USERNAME].toString() + ".sqlite"))
     {
         if (!this->tryToCreateDBFile())
@@ -90,7 +89,7 @@ DataBase::checkForAnyPrivateEnvUpdate(const NetInfoCollection &envs)
         auto env_little_info = itter->toArray(); // the info : [env_id, last_message_id]
         if (!envExists(env_little_info[0].toInteger()))
         {
-            emit this->needPrivateEnvDetails(itter->toInteger());
+            emit this->needPrivateEnvDetails(env_little_info[0].toInteger());
         }
         else if(!env_little_info[1].isNull() &&
                 getLastEnvMessageId(env_little_info[0].toInteger()) != (quint64)env_little_info[1].toInteger())
@@ -105,10 +104,9 @@ void
 DataBase::insertValidTextMessagesList(const NetInfoCollection &messages)
 {
     using namespace KeyWords;
-    QMutexLocker scoped_lock(&insert_lock);
     auto messages_list = convertToNormalForm(messages);
-    for (auto itter = messages_list->begin(); itter < messages_list->end(); itter++)
-        this->insertValidTextMessage(itter->toObject());
+    for (auto itter = messages_list->cbegin(); itter < messages_list->cend(); itter++)
+        this->insertValidTextMessage(convertToHash(itter->toObject()));
 }
 
 
@@ -127,26 +125,23 @@ void DataBase::deletePendingTextMessage(const quint64 &invalid_id)
 
 
 void
-DataBase::insertValidPrivateEnv(const NetInfoContainer &env_info, bool participates)
+DataBase::insertValidPrivateEnv(const InfoContainer &env_info, bool participates)
 {
     using namespace KeyWords;
-    auto other_person = env_info[OTHER_PERSON_INFO].toObject();
-    this->tryToInsertUser(other_person);
     const auto create_env_query = fmt::format("INSERT INTO chat_envs(env_id, participates) "
                                               "VALUES({}, {});",
-                                              env_info[ENV_ID].toInteger(), (int)participates);
+                                              env_info[ENV_ID].toUInt(), (int)participates);
     const auto create_private_query = fmt::format("INSERT INTO "
                                                   "private_chats(env_id, other_person) "
                                                   "VALUES       ({},       {});",
-                                                  env_info[ENV_ID].toInteger(),
-                                                  other_person[USER_ID].toInteger(),
-                                                  env_info[SECOND_PERSON].toInteger());
+                                                  env_info[ENV_ID].toUInt(),
+                                                  env_info[OTHER_PERSON_ID].toUInt());
     if (this->execOtherQry(create_env_query.c_str()) &&
             this->execOtherQry(create_private_query.c_str()))
     {
         emit this->newValidPrivateEnvInserted(env_info,
-                                              other_person[NAME].toString(),
-                                              this->getLastEnvMessageId(env_info[ENV_ID].toInteger()));
+                                              this->getNameOfUser(env_info[OTHER_PERSON_ID].toUInt()),
+                                              this->getLastEnvMessageId(env_info[ENV_ID].toUInt()));
     }
 }
 
@@ -156,9 +151,9 @@ DataBase::insertPendingPrivateChat(const quint64 &user_id)
 {
     using namespace KeyWords;
     QMutexLocker scoped_lock(&insert_lock);
-    this->execOtherQry(fmt::format("INSERT INTO pending_chat_envs(env_type, first_person, second_person) "
-                                   "VALUES('private_chat', {}, {});",
-                                   this->m_user_info[USER_ID].toUInt(), user_id).c_str()
+    this->execOtherQry(fmt::format("INSERT INTO pending_chat_envs(env_type, other_person) "
+                                   "VALUES('private_chat', {});",
+                                   this->m_user_info[USER_ID].toUInt()).c_str()
                        );
     return this->getLastInsertId();
 }
@@ -171,7 +166,7 @@ DataBase::insertPendingTextMessage(const quint16 &env_id,
 {
     QMutexLocker scoped_lock(&insert_lock);
     auto id_field = to_pending_env ? "invalid_env_id" : "env_id";
-    this->execOtherQry(fmt::format("INSERT INTO pending_messages({}, message_text) "
+    this->execOtherQry(fmt::format("INSERT INTO pending_text_messages({}, message_text) "
                                    "VALUES({}, '{}');",
                                    id_field, env_id,
                                    toRaw(message_text.toStdString())).c_str()
@@ -182,7 +177,7 @@ DataBase::insertPendingTextMessage(const quint16 &env_id,
 
 
 void
-DataBase::insertValidTextMessage(const QJsonObject& msg_info)
+DataBase::insertValidTextMessage(const InfoContainer& msg_info)
 {
     using namespace KeyWords;
     QMutexLocker scoped_lock(&insert_lock);
@@ -198,7 +193,7 @@ DataBase::insertValidTextMessage(const QJsonObject& msg_info)
                 "VALUES ({},          '{}')",
                 msg_info[MESSAGE_ID].toInt(), toRaw(msg_info[MESSAGE_TEXT].toString().toStdString()));
     ok = this->execOtherQry(text_message_insert_query.c_str()) && ok;
-    if (msg_info.contains(SEEN) && !msg_info[SEEN].toBool() && ok)
+    if (ok)
         emit this->newValidTextMessageInserted(msg_info);
 }
 
@@ -279,7 +274,7 @@ DataBase::getEnvTextMessages(const quint64 &env_id,
                                            "WHERE env_id={};", env_id).c_str());
     auto invalids = this->SELECT(fmt::format("SELECT * FROM pending_messages "
                                              "WHERE env_id={};", env_id).c_str());
-    valids->append(*invalids);
+    valids->append(std::move(*invalids));
     return valids;
 }
 

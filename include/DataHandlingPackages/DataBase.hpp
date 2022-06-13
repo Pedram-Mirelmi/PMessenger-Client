@@ -60,7 +60,7 @@ public:
     deletePendingTextMessage(const quint64& invalid_id);
 
     void
-    insertValidPrivateEnv(const NetInfoContainer& env_info,
+    insertValidPrivateEnv(const InfoContainer& env_info,
                           bool participates = true);
 
 
@@ -74,7 +74,7 @@ public:
                              const bool& to_pending_env);
 
     void
-    insertValidTextMessage(const QJsonObject& msg_info);
+    insertValidTextMessage(const InfoContainer& msg_info);
 
 
     bool
@@ -162,10 +162,10 @@ private:
 
 signals:
     void
-    newValidTextMessageInserted(const QJsonObject& msg_info);
+    newValidTextMessageInserted(const InfoContainer& msg_info);
 
     void
-    newValidPrivateEnvInserted(const NetInfoContainer& env_info,
+    newValidPrivateEnvInserted(const InfoContainer& env_info,
                                const QString& env_title,
                                const quint64& last_msg_id);
 

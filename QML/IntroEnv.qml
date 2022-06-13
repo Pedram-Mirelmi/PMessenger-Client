@@ -80,7 +80,7 @@ Rectangle
                 width: 90
                 onButtonClicked:
                 {
-                    netConn.sendLoginReq(usernameField.text, passwordField.text);
+                    netHandler.sendLoginReq(usernameField.text, passwordField.text);
                 }
                 Text
                 {
@@ -97,7 +97,7 @@ Rectangle
                 width: 100
                 onButtonClicked:
                 {
-                    netConn.sendRegisterReq(usernameField.text, passwordField.text);
+                    netHandler.sendRegisterReq(usernameField.text, passwordField.text);
                 }
                 Text
                 {
@@ -120,7 +120,7 @@ Rectangle
         {
             id: icon
             anchors.fill: parent
-            source: netHandler.netConnected ? "qrc:/images/connected.png" : "qrc:/images/disconnected.png"
+            source: netHandler.netHandlerected ? "qrc:/images/connected.png" : "qrc:/images/disconnected.png"
         }
     }
 }

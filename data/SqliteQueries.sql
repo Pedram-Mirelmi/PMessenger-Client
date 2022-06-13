@@ -19,9 +19,9 @@ DROP TABLE IF EXISTS private_chats;
 CREATE TABLE IF NOT EXISTS private_chats
 (
     env_id                  INTEGER UNSIGNED PRIMARY KEY,
-    other_person            INTEGER UNSIGNED UNIQUE,
+    other_person_id            INTEGER UNSIGNED UNIQUE,
     FOREIGN KEY (env_id) REFERENCES chat_envs(env_id),
-    FOREIGN KEY (other_person) REFERENCES users (user_id)
+    FOREIGN KEY (other_person_id) REFERENCES users (user_id)
 );
 
 DROP TABLE IF EXISTS pending_chat_envs;
@@ -29,8 +29,8 @@ CREATE TABLE IF NOT EXISTS pending_chat_envs
 (
     invalid_env_id          INTEGER PRIMARY KEY AUTOINCREMENT,
     env_type                CHAR(1),
-    other_person            INTEGER UNSIGNED UNIQUE ,
-    FOREIGN KEY (other_person) REFERENCES users(user_id)
+    other_person_id         INTEGER UNSIGNED UNIQUE ,
+    FOREIGN KEY (other_person_id) REFERENCES users(user_id)
 );
 
 DROP TABLE IF EXISTS messages;

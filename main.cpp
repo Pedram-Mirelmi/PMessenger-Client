@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
     MainApp backend_app(engine);
 
 
-//    engine.rootContext()->setContextProperty("mainApp", &backend_app);
+    engine.rootContext()->setContextProperty("mainApp", &backend_app);
 
 
     const QUrl url(QStringLiteral("qrc:/QML/main.qml"));

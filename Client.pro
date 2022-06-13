@@ -51,8 +51,7 @@ HEADERS += \
     include/Others/CommonTools.hpp \
     include/Others/TypeDefs.hpp \
     include/Others/format.hpp \
-    include/Others/stringTools.hpp \
-    stringTools.hpp
+    include/Others/stringTools.hpp
 
 DISTFILES += \
     todolist.txt

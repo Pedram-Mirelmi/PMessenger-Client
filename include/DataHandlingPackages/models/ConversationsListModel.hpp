@@ -63,8 +63,7 @@ public:
 
     virtual QHash<int, QByteArray> roleNames() const override;
 
-    void considerNewValidatedTextMessage(const NetInfoContainer &valid_message_info,
-                                         const quint64 &invalid_message_id);
+    void considerNewTextMessage(const InfoContainer &valid_message_info);
 
     void sortConversations(); // insertion sort
 
@@ -77,7 +76,7 @@ public:
 
 public slots:
     void popUpConversation(const QJsonObject& new_inserted_msg);
-    void addNewPrivateEnv(const NetInfoContainer& new_env_info,
+    void addNewPrivateEnv(const InfoContainer& new_env_info,
                           const QString& env_title,
                           const quint64& last_msg_id);
 

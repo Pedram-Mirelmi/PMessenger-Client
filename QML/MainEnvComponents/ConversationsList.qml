@@ -84,7 +84,7 @@ Rectangle
                 {
                     width: parent.width
                     height: 50
-                    //                    color: chatsModel.currChatIndex === model.index ? "steelblue" : "lightblue"
+//                    color: chatsModel.currChatIndex === model.index ? "#0492b5" : "#2b6aad"
 
                     MouseArea
                     {
@@ -92,7 +92,6 @@ Rectangle
                         cursorShape: Qt.PointingHandCursor
                         onClicked:
                         {
-                            console.log("clicked on " + model.title)
                             mainApp.openExistingChatEnv(model.env_id, model.is_pending)
                             chatsModel.currChatIndex = model.index
                         }

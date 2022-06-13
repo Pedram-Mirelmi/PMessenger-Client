@@ -4,6 +4,7 @@
 #include <QHash>
 #include <QFile>
 #include "../ClientKeywords.hpp"
+#include "../Others/CommonTools.hpp"
 
 DataHandler::DataHandler(QObject *parent, NetworkHandler *netHandler, InfoContainer& user_info)
     : QObject(parent),
@@ -36,7 +37,7 @@ DataHandler::DataHandler(QObject *parent, NetworkHandler *netHandler, InfoContai
                      this->m_message_list_model, &MessageListModel::considerNewTextMessage);
 
     QObject::connect(this->m_db, &DataBase::newValidTextMessageInserted,
-                     this->m_conversation_list_model, &ConversationsListModel::popUpConversation);
+                     this->m_conversation_list_model, &ConversationsListModel::considerNewTextMessage);
 
     QObject::connect(this->m_db, &DataBase::newValidPrivateEnvInserted,
                      this->m_conversation_list_model, &ConversationsListModel::addNewPrivateEnv);
@@ -63,7 +64,8 @@ void DataHandler::handleNewData(const QJsonObject &net_message)
     }
     else if (data_type == PRIVATE_ENV_DETAILS)
     {
-        this->m_db->insertValidPrivateEnv(net_message[ENV_INFO].toObject());
+        this->m_db->tryToInsertUser(net_message[OTHER_PERSON_INFO].toObject());
+        this->m_db->insertValidPrivateEnv(convertToHash(net_message[ENV_INFO].toObject()));
     }
     else if (data_type == MESSAGE)
     {
@@ -87,7 +89,7 @@ void DataHandler::registerAllPendingChats()
     {
         if(env_info[ENV_TYPE].toString() == PRIVATE_CHAT)
         {
-            this->m_net_handler->sendCreateNewPrivateChatReq(env_info[SECOND_PERSON].toUInt(),
+            this->m_net_handler->sendCreateNewPrivateChatReq(env_info[OTHER_PERSON_ID].toUInt(),
                                                              env_info[INVALID_ENV_ID].toUInt());
         }
     }
@@ -98,23 +100,22 @@ void DataHandler::registerAllPendingMessages()
 
 }
 
-void DataHandler::validatePrivateChat(const NetInfoContainer &valid_env_info,
-                                      const quint64& invalid_env_id)
+void DataHandler::validatePrivateChat(const InfoContainer &valid_env_info)
 {
     using namespace KeyWords;
     this->m_db->insertValidPrivateEnv(valid_env_info);
-    this->m_db->deletePendingChat(invalid_env_id);
-    this->m_conversation_list_model->changeConversationToValid(invalid_env_id, valid_env_info[ENV_ID].toInteger());
+    this->m_db->deletePendingChat(valid_env_info[INVALID_ENV_ID].toUInt());
+    this->m_conversation_list_model->changeConversationToValid(valid_env_info[INVALID_ENV_ID].toUInt(),
+                                                               valid_env_info[ENV_ID].toUInt());
 }
 
-void DataHandler::validateTextMessage(const NetInfoContainer &valid_message_info,
-                                      const quint64 &invalid_message_id)
+void DataHandler::validateTextMessage(const InfoContainer &valid_message_info)
 {
     using namespace KeyWords;
     this->m_db->insertValidTextMessage(valid_message_info);
-    this->m_db->deletePendingTextMessage(invalid_message_id);
-    this->m_conversation_list_model->considerNewValidatedTextMessage(valid_message_info, invalid_message_id);
-    this->m_message_list_model->considerNewTextMessage(valid_message_info);
+    this->m_db->deletePendingTextMessage(valid_message_info[INVALID_MESSAGE_ID].toUInt());
+//    this->m_conversation_list_model->considerNewValidatedTextMessage(valid_message_info, invalid_message_id);
+//    this->m_message_list_model->considerNewTextMessage(valid_message_info, false);
 }
 
 
@@ -171,19 +172,21 @@ void DataHandler::fillConversationListModel()
 
     for (; i < number_of_valid_envs; i++)
         new_data.emplace_back(
-                    pendings->value(i)[ENV_ID].toUInt(),
+                    valid_envs->value(i)[ENV_ID].toUInt(),
                     false,
-                    this->m_db->getNameOfUser(valid_envs->value(i)[OTHER_PERSON].toUInt()),
+                    this->m_db->getNameOfUser(valid_envs->value(i)[OTHER_PERSON_ID].toUInt()),
                     this->m_db->getLastEnvMessageId(valid_envs->value(i)[ENV_ID].toUInt())
                     );
 
     for (; i < new_data.capacity(); i++)
         new_data.emplace_back(
-                    pendings->value(i)[INVALID_ENV_ID].toUInt(),
+                    pendings->value(i - number_of_valid_envs)[INVALID_ENV_ID].toUInt(),
                     true,
-                    this->m_db->getNameOfUser(pendings->value(i)[OTHER_PERSON].toUInt()),
+                    this->m_db->getNameOfUser(pendings->value(i)[OTHER_PERSON_ID].toUInt()),
                     this->m_db->getMaxMessagesId()
                     );
+
+    qDebug() << new_data.at(0).env_id;
 
     this->m_conversation_list_model->endResetModel();
 }

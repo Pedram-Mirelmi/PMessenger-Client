@@ -1,9 +1,11 @@
 #include "CommonTools.hpp"
 
-void convertToHash(InfoContainer &target, const QJsonObject &source)
+InfoContainer convertToHash(const NetInfoContainer &source)
 {
+    InfoContainer target;
     for (auto itter = source.constBegin(); itter < source.constEnd(); itter++)
         target[itter.key()] = itter.value().toVariant();
+    return target;
 }
 
 NetInfoCollectionPtr convertToNormalForm(const QJsonArray &data)

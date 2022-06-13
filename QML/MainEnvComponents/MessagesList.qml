@@ -48,19 +48,22 @@ Rectangle
             ListView
             {
                 id: chatList
+                anchors.fill: parent
                 clip: true
                 spacing: 5
                 model: messagesModel
+
                 delegate: Component
                 {
                     Rectangle
                     {
-                        anchors.right: model.owner_id === 1 ? chatList.contentItem.right : undefined
-                        anchors.left: model.owner_id !== 1 ? chatList.contentItem.left : undefined
+                        anchors.right: model.owner_id === mainWindow.user_id ? chatList.contentItem.right : undefined
+                        anchors.left: model.owner_id !== mainWindow.user_id ? chatList.contentItem.left : undefined
                         anchors.margins: 10
                         width: Math.min(messageText.implicitWidth + messageText.anchors.margins, 3/4 * chatList.width)
                         height: messageText.implicitHeight + 2*messageText.anchors.margins
-                        color: model.owner_id === 1 ? "lightblue" : "lightgrey"
+                        color: model.owner_id === mainWindow.user_id ? "#0460b5" : "#3e6c96"
+
                         Label
                         {
                             id: messageText
@@ -94,9 +97,10 @@ Rectangle
                 onButtonClicked:
                 {
                     console.log("user sent ", messageInputField.text)
-//                    newChatMsgSent(messageField.text, chatComp.env_id)
-//                    messageField.clear()
+                    mainApp.sendNewTextMessage(messageInputField.text, chatComp.env_id)
+                    messageInputField.clear()
                 }
+                visible: messageInputField.text
                 Label
                 {
                     text: "Send"

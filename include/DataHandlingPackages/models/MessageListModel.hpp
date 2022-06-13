@@ -21,7 +21,8 @@ public:
         message_id = Qt::UserRole,
         owner_id,
         message_type,
-        message_text
+        message_text,
+        is_pending
     };
 
     // Basic functionality:
@@ -42,7 +43,7 @@ public:
     void insertMessages(QVector<InfoContainer> &msg_list);
 
 public slots:
-    void considerNewTextMessage(const QJsonObject& msg_info);
+    void considerNewTextMessage(const InfoContainer& msg_info);
 
 private:
     std::shared_ptr<InfoCollection> m_messages;
@@ -53,6 +54,6 @@ private:
 
     void sortMessages();
 
-    void convertToHash(InfoContainer& target, const QJsonObject& source); // in place
+    InfoContainer convertToHash(const NetInfoContainer &source);
 };
 
