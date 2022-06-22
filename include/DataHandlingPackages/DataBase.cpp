@@ -104,11 +104,19 @@ void
 DataBase::insertValidTextMessagesList(const NetInfoCollection &messages)
 {
     using namespace KeyWords;
-    auto messages_list = convertToNormalForm(messages);
-    for (auto itter = messages_list->cbegin(); itter < messages_list->cend(); itter++)
-        this->insertValidTextMessage(convertToHash(itter->toObject()));
+    NetInfoCollectionPtr messages_list;
+    if (messages.size() && messages[0].isArray())
+    {
+        auto messages_list = convertToNormalForm(messages);
+        for (auto itter = messages_list->cbegin(); itter < messages_list->cend(); itter++)
+            this->insertValidTextMessage(convertToHash(itter->toObject()));
+    }
+    else
+    {
+        for (auto itter = messages.cbegin(); itter < messages.cend(); itter++)
+            this->insertValidTextMessage(convertToHash(itter->toObject()));
+    }
 }
-
 
 void
 DataBase::deletePendingChat(const quint64 &invalid_id)
@@ -132,17 +140,12 @@ DataBase::insertValidPrivateEnv(const InfoContainer &env_info, bool participates
                                               "VALUES({}, {});",
                                               env_info[ENV_ID].toUInt(), (int)participates);
     const auto create_private_query = fmt::format("INSERT INTO "
-                                                  "private_chats(env_id, other_person) "
+                                                  "private_chats(env_id, other_person_id) "
                                                   "VALUES       ({},       {});",
                                                   env_info[ENV_ID].toUInt(),
                                                   env_info[OTHER_PERSON_ID].toUInt());
-    if (this->execOtherQry(create_env_query.c_str()) &&
-            this->execOtherQry(create_private_query.c_str()))
-    {
-        emit this->newValidPrivateEnvInserted(env_info,
-                                              this->getNameOfUser(env_info[OTHER_PERSON_ID].toUInt()),
-                                              this->getLastEnvMessageId(env_info[ENV_ID].toUInt()));
-    }
+    this->execOtherQry(create_env_query.c_str());
+    this->execOtherQry(create_private_query.c_str());
 }
 
 

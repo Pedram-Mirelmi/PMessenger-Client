@@ -164,10 +164,9 @@ signals:
     void
     newValidTextMessageInserted(const InfoContainer& msg_info);
 
-    void
-    newValidPrivateEnvInserted(const InfoContainer& env_info,
-                               const QString& env_title,
-                               const quint64& last_msg_id);
+//    void
+//    newValidPrivateEnvInserted(const quint64& invalid_env_id,
+//                               const quint64& valid_env_id);
 
     void
     needPrivateEnvDetails(const quint64 &env_id); // faced new raw env_id, need info and messages

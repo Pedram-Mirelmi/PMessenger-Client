@@ -3,6 +3,11 @@
 #include "../../ClientKeywords.hpp"
 #include <QJsonObject>
 
+bool ConversatonItem::operator==(const ConversatonItem &other) const
+{
+    return this->is_pending == other.is_pending && this->env_id == other.is_pending;
+}
+
 ConversationsListModel::ConversationsListModel(QObject *parent)
     : QAbstractListModel(parent)
 {
@@ -123,6 +128,12 @@ void ConversationsListModel::considerNewTextMessage(const InfoContainer &valid_m
     // TODO
 }
 
+void ConversationsListModel::insertEnv(const ConversatonItem &conversation)
+{
+    if(this->m_conversations.lastIndexOf(conversation) == -1)
+        this->appendConversation(conversation);
+}
+
 void ConversationsListModel::sortConversations() // insertion sort
 {
     using namespace KeyWords;
@@ -145,7 +156,7 @@ void ConversationsListModel::appendConversation(const ConversatonItem &conversat
                           this->m_conversations.size());
     this->m_conversations.append(conversation);
     this->endInsertRows();
-    }
+}
 
 void ConversationsListModel::tryToInsertConversation(const ConversatonItem &conversation)
 {
@@ -188,13 +199,19 @@ void ConversationsListModel::popUpConversation(const QJsonObject& new_inserted_m
     //    }
 }
 
-void ConversationsListModel::addNewPrivateEnv(const InfoContainer &new_env_info,
-                                              const QString& env_title,
-                                              const quint64& last_msg_id)
+void ConversationsListModel::considerValidatedPrivateEnv(const quint64& invalid_env_id,
+                                                         const quint64& valid_env_id)
 {
     using namespace KeyWords;
-    this->appendConversation(ConversatonItem(new_env_info[ENV_ID].toUInt(),
-                                                  false, env_title, last_msg_id));
+    int index = this->m_conversations.size() - 1;
+    for (auto itter = this->m_conversations.end(); itter != this->m_conversations.begin(); itter--, index--)
+        if (itter->is_pending && itter->env_id == invalid_env_id)
+        {
+            itter->is_pending = false;
+            itter->env_id = valid_env_id;
+            emit this->dataChanged(this->index(index), this->index(index), QVector<int>() << Roles::env_id << Roles::is_pending);
+            return;
+        }
 }
 
 void ConversationsListModel::swapItems(const quint64 &first, const quint64 &second)
@@ -220,3 +237,4 @@ quint16 ConversationsListModel::searchFromTop(const quint64 &env_id,
     }
     return index == -1 ? this->m_conversations.size() : index;
 }
+

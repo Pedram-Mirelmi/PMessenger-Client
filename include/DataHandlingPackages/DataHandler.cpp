@@ -39,8 +39,11 @@ DataHandler::DataHandler(QObject *parent, NetworkHandler *netHandler, InfoContai
     QObject::connect(this->m_db, &DataBase::newValidTextMessageInserted,
                      this->m_conversation_list_model, &ConversationsListModel::considerNewTextMessage);
 
-    QObject::connect(this->m_db, &DataBase::newValidPrivateEnvInserted,
-                     this->m_conversation_list_model, &ConversationsListModel::addNewPrivateEnv);
+//    QObject::connect(this->m_db, &DataBase::newValidPrivateEnvInserted,
+//                     this->m_conversation_list_model, &ConversationsListModel::addValidatePrivateEnv);
+
+    QObject::connect(this, &DataHandler::newPrivateEnvValidated,
+                     this->m_conversation_list_model, &ConversationsListModel::considerValidatedPrivateEnv);
 
 
 }
@@ -66,6 +69,10 @@ void DataHandler::handleNewData(const QJsonObject &net_message)
     {
         this->m_db->tryToInsertUser(net_message[OTHER_PERSON_INFO].toObject());
         this->m_db->insertValidPrivateEnv(convertToHash(net_message[ENV_INFO].toObject()));
+        this->m_conversation_list_model->insertEnv(ConversatonItem(net_message[ENV_INFO][ENV_ID].toInteger(),
+                                                                   false,
+                                                                   net_message[OTHER_PERSON_INFO][NAME].toString(),
+                                                                   this->m_db->getLastEnvMessageId(net_message[ENV_INFO][ENV_ID].toInteger())));
     }
     else if (data_type == MESSAGE)
     {
@@ -107,6 +114,7 @@ void DataHandler::validatePrivateChat(const InfoContainer &valid_env_info)
     this->m_db->deletePendingChat(valid_env_info[INVALID_ENV_ID].toUInt());
     this->m_conversation_list_model->changeConversationToValid(valid_env_info[INVALID_ENV_ID].toUInt(),
                                                                valid_env_info[ENV_ID].toUInt());
+    this->newPrivateEnvValidated(valid_env_info[INVALID_ENV_ID].toUInt(), valid_env_info[ENV_ID].toUInt());
 }
 
 void DataHandler::validateTextMessage(const InfoContainer &valid_message_info)
@@ -185,8 +193,6 @@ void DataHandler::fillConversationListModel()
                     this->m_db->getNameOfUser(pendings->value(i)[OTHER_PERSON_ID].toUInt()),
                     this->m_db->getMaxMessagesId()
                     );
-
-    qDebug() << new_data.at(0).env_id;
 
     this->m_conversation_list_model->endResetModel();
 }

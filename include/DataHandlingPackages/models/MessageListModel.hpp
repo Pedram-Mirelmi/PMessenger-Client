@@ -11,14 +11,21 @@ class DataHandler;
 class MessageListModel : public QAbstractListModel
 {
     Q_OBJECT
+    Q_PROPERTY(quint64 curr_env_id READ curr_env_id WRITE setCurr_env_id NOTIFY curr_env_idChanged)
     quint64 current_env_id;
     friend class DataHandler;
+public:
+    quint64 curr_env_id();
+    quint64 setCurr_env_id(const quint64& env_id);
+signals:
+    void curr_env_idChanged(const quint64& env_id);
 public:
     explicit MessageListModel(QObject *parent = nullptr);
 
     enum Roles
     {
         message_id = Qt::UserRole,
+        env_id,
         owner_id,
         message_type,
         message_text,

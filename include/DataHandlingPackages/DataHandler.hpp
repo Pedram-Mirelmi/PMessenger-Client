@@ -85,6 +85,10 @@ protected:
     insertPendingTextMessage(const quint64& env_id,
                              const bool& is_env_pending,
                              const QString& message_text);
+
+signals:
+    void newPrivateEnvValidated(const quint64& invalid_env_id,
+                                const quint64& valid_env_id);
 };
 
 

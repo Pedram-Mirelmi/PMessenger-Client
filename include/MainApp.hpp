@@ -28,7 +28,7 @@ public:
 
     Q_INVOKABLE void sendNewTextMessage(const quint64& env_id,
                                         const QString& message_text,
-                                        const bool& to_pending);
+                                        const bool& to_pending = false);
 
 private:
     InfoContainer m_user_info;

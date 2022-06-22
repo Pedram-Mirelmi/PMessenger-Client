@@ -138,8 +138,6 @@ void NetworkHandler::connectToServer()
     this->m_socket->connectToHost(m_address, m_port);
 }
 
-
-
 // public slot
 void NetworkHandler::handleNewNetMessage(const QJsonObject &net_msg)
 {

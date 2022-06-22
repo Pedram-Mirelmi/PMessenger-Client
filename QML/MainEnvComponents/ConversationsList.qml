@@ -94,6 +94,7 @@ Rectangle
                         {
                             mainApp.openExistingChatEnv(model.env_id, model.is_pending)
                             chatsModel.currChatIndex = model.index
+                            messagesModel.curr_env_id = model.env_id
                         }
                     }
                     Label

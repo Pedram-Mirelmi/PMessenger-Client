@@ -8,6 +8,17 @@
 
 
 
+quint64 MessageListModel::curr_env_id()
+{
+    return this->current_env_id;
+}
+
+quint64 MessageListModel::setCurr_env_id(const quint64 &env_id)
+{
+    this->current_env_id = env_id;
+    emit this->curr_env_idChanged(this->current_env_id);
+}
+
 MessageListModel::MessageListModel(QObject *parent)
     : QAbstractListModel(parent),
       m_messages(std::make_shared<InfoCollection>())
@@ -90,6 +101,7 @@ QHash<int, QByteArray> MessageListModel::roleNames() const
     using namespace KeyWords;
     QHash<int, QByteArray> names;
     names[Roles::message_id] = MESSAGE_ID;
+    names[Roles::env_id] = ENV_ID;
     names[Roles::owner_id] = OWNER_ID;
     names[Roles::message_text] = MESSAGE_TEXT;
     names[Roles::message_type] = MESSAGE_TYPE;

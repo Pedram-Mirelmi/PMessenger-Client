@@ -15,6 +15,7 @@ struct ConversatonItem
     bool is_pending;
     QString title;
     quint64 last_message_id;
+    bool operator==(const ConversatonItem& other) const;
 };
 
 
@@ -65,6 +66,8 @@ public:
 
     void considerNewTextMessage(const InfoContainer &valid_message_info);
 
+    void insertEnv(const ConversatonItem& conversation);
+
     void sortConversations(); // insertion sort
 
     void appendConversation(const ConversatonItem& conversation);
@@ -76,10 +79,8 @@ public:
 
 public slots:
     void popUpConversation(const QJsonObject& new_inserted_msg);
-    void addNewPrivateEnv(const InfoContainer& new_env_info,
-                          const QString& env_title,
-                          const quint64& last_msg_id);
-
+    void considerValidatedPrivateEnv(const quint64& invalid_env_id,
+                               const quint64& valid_env_id);
 private:
 
     void swapItems(const quint64 &first, const quint64 &second);

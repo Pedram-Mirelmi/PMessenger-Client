@@ -6,7 +6,7 @@ import "../TinyComponents/"
 
 Rectangle
 {
-    id: chatComp
+    id: messagesComp
     color: "#021c38"
     ColumnLayout
     {
@@ -42,9 +42,7 @@ Rectangle
                 font.pixelSize: 20
                 visible: chatList.count === 0
                 anchors.centerIn: parent
-
             }
-
             ListView
             {
                 id: chatList
@@ -52,7 +50,6 @@ Rectangle
                 clip: true
                 spacing: 5
                 model: messagesModel
-
                 delegate: Component
                 {
                     Rectangle
@@ -96,11 +93,9 @@ Rectangle
                 enabled: messageInputField.text.length > 0
                 onButtonClicked:
                 {
-                    console.log("user sent ", messageInputField.text)
-                    mainApp.sendNewTextMessage(messageInputField.text, chatComp.env_id)
+                    mainApp.sendNewTextMessage(messagesModel.curr_env_id, messageInputField.text)
                     messageInputField.clear()
                 }
-                visible: messageInputField.text
                 Label
                 {
                     text: "Send"
