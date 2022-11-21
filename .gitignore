@@ -33,6 +33,7 @@
 
 *.vscode/
 build/
+Build/
 *.autosave
 *.sqlite
 data/*.sqlite
