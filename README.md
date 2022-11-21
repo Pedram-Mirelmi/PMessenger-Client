@@ -4,9 +4,9 @@
 -   App can work as much as possible in offline and constantly tries to connect to server<br>
   No Connected yet  | Connected! 
  :-------------:|:-------------:
- | <img src="./FirstPageOffline.png" width="200"/>  | <img src="./FirstPageOnline.png" width="200"/> | <br>
+ | <img src="./FirstPageOffline.png" width="600"/>  | <img src="./FirstPageOnline.png" width="600"/> | <br>
 -   Register or login with a username and password
 -   Search for other users and start a chat with them
-<img src="./SearchPage.png" width="200"/>
+<img src="./SearchPage.png" width="1000"/>
 -   You can send messages even when you're offline. whenver you get online the pending messages will be sent.
-<img src="./ChatPage.png" width="200"/>
+<img src="./ChatPage.png" width="1000"/>
