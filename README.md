@@ -4,7 +4,7 @@
 -   App can work as much as possible in offline and constantly tries to connect to server<br>
   No Connected yet  | Connected! 
  :-------------:|:-------------:
- | <img src="./FirstPageOffline.png" width="600"/>  | <img src="./FirstPageOnline.png" width="600"/> | <br>
+ | <img src="./FirstPageOffline.png" width="500"/>  | <img src="./FirstPageOnline.png" width="500"/> | <br>
 -   Register or login with a username and password
 -   Search for other users and start a chat with them
 <img src="./SearchPage.png" width="1000"/>
