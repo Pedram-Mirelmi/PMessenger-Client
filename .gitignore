@@ -39,3 +39,4 @@ Build/
 data/*.sqlite
 *test*
 todolist.txt
+*.user
