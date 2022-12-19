@@ -15,9 +15,7 @@ SOURCES += \
     include/DataHandlingPackages/models/ConversationsListModel.cpp \
     include/DataHandlingPackages/models/MessageListModel.cpp \
     include/MainApp.cpp \
-    include/NetworkPackages/NetReceiver.cpp \
-    include/NetworkPackages/NetSender.cpp \
-    include/NetworkPackages/NetworkHandler.cpp \
+    include/NetworkPackages/NetIOHandler.cpp \
     include/Others/CommonTools.cpp \
     include/Others/stringTools.cpp \
     main.cpp
@@ -37,6 +35,11 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     KeyWords.hpp \
+    include/AsyncNetFramework/AbstractNetIOManager.h \
+    include/AsyncNetFramework/IService.h \
+    include/AsyncNetFramework/io/BasicNetMessage.h \
+    include/AsyncNetFramework/io/INetMessageBodyDeserializer.h \
+    include/AsyncNetFramework/io/ISerializable.h \
     include/DataHandlingPackages/DataBase.hpp \
     include/DataHandlingPackages/DataHandler.hpp \
     include/ClientKeywords.hpp \
@@ -45,9 +48,8 @@ HEADERS += \
     include/DataHandlingPackages/models/ConversationsListModel.hpp \
     include/DataHandlingPackages/models/MessageListModel.hpp \
     include/MainApp.hpp \
-    include/NetworkPackages/NetReceiver.hpp \
-    include/NetworkPackages/NetSender.hpp \
-    include/NetworkPackages/NetworkHandler.hpp \
+    include/NetworkPackages/NetIOHandler.hpp \
+    include/NetworkPackages/NetMessages/NetMessageType.hpp \
     include/Others/CommonTools.hpp \
     include/Others/TypeDefs.hpp \
     include/Others/format.hpp \

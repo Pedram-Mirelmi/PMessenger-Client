@@ -4,7 +4,7 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QJsonObject>
-#include "./NetworkPackages/NetworkHandler.hpp"
+#include "./NetworkPackages/NetIOHandler.hpp"
 #include "./DataHandlingPackages/DataHandler.hpp"
 
 static QJsonObject user_info;
@@ -13,11 +13,11 @@ class MainApp : public QObject
 {
     Q_OBJECT
 public:
-    NetworkHandler* m_network_handler;
+    NetIOHandler* m_network_handler;
     DataHandler* m_data_handler;
     explicit MainApp (QQmlApplicationEngine& qml_engine,
                       QObject* parent = nullptr,
-                      const QString& address = "127.0.0.1",
+                      const std::string& address = "127.0.0.1",
                       const quint16 port = 54000);
 
     Q_INVOKABLE void openPrivateChatWith(const quint64 user_id,

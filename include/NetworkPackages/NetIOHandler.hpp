@@ -7,62 +7,53 @@
 #include <cmath>
 #include <QObject>
 #include <QTimer>
-#include "../NetworkPackages/NetReceiver.hpp"
-#include "../NetworkPackages/NetSender.hpp"
+#include "../AsyncNetFramework/AbstractNetIOManager.h"
+#include "../NetworkPackages/NetMessages/NetMessageType.hpp"
 #include "../Others/TypeDefs.hpp"
+
 
 class MainApp;
 
-class NetworkHandler : public QObject
+class NetIOHandler : public QObject,
+                       public AbstractNetIOManager<NetMessageType>
 {
     Q_OBJECT
-    friend class MainApp;
-
-    QTcpSocket* m_socket;
-    const QHostAddress m_address;
-    quint16 m_port;
-    NetMessageReceiver* m_receiver;
-    NetMessageSender* m_sender;
-    QThread* m_network_thread;
 public:
     Q_PROPERTY(bool netConnected READ netConnected NOTIFY netConnectedChanged);
 signals:
     void netConnectedChanged(bool connection_status);
 public:
-    explicit NetworkHandler(QObject* parent,
-                            const QString& address = "127.0.0.1",
+    explicit NetIOHandler(QObject* parent,
+                            const std::string &address = "127.0.0.1",
                             quint16 port = 54000);
 
     bool netConnected ();
 
-    Q_INVOKABLE void sendRegisterReq(const QString& username,
+    void requestRegister(const QString& username,
                                      const QString& password);
 
-    Q_INVOKABLE void sendLoginReq(const QString& username,
+    void requestLogin(const QString& username,
                                   const QString& password);
 
-    Q_INVOKABLE void sendUsernameSearchReq(const QString& username);
-
-    Q_INVOKABLE void test();
+    void requestUsernameSearch(const QString& username);
 
 //    Q_INVOKABLE QString getLastMessageText(const quint64& env_id,
 //                                           const bool& is_pending);
 
-    void sendFetchReq();
+    void requestFetch();
 
-    void sendCreateNewPrivateChatReq(const quint64& user_chat_with,
+    void requestNewPrivateChat(const quint64& user_chat_with,
                                      const quint64& invalid_id);
 
-    void sendNewTextMessageReq(const quint64& env_id,
+    void requestNewTextMessage(const quint64& env_id,
                                const QString& message_text,
                                const quint64& invalid_id);
 
-    void sendEnvDetailsReq(const quint64& env_id);
+    void requestEnvDetails(const quint64& env_id);
 
-    void sendEnvMessagesReq(const quint64& env_id, const quint64& last_message_we_have);
+    void requestEnvMessages(const quint64& env_id, const quint64& last_message_we_have);
 
 public slots:
-    void connectToServer();
     void handleNewNetMessage(const QJsonObject& net_msg);
     void sendUserInfoReq(const quint64& user_id);
 
@@ -74,4 +65,13 @@ signals:
     void usernameSearchResultArrived(const QJsonArray& results);
     void serverConfirmedPrivateChatCreation(const InfoContainer& env_info);
     void serverConfirmedTextMessageCreation(const InfoContainer& message_info);
+
+    // IService interface
+public:
+    void start() override;
+    void stop() override;
+
+    // AbstractNetIOManager interface
+protected:
+    void onNewMessageReadCompletely() override;
 };

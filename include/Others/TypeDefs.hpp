@@ -1,7 +1,18 @@
 #pragma once
-#include <QHash>
-#include <QVariant>
-#include <QVariantMap>
+#include <memory>
+#include "../NetworkPackages/NetMessages/NetMessageType.hpp"
+#include "../AsyncNetFramework/io/BasicNetMessage.h"
+#include "../AsyncNetFramework/io/INetMessageBodyDeserializer.h"
+#include <QString>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QVector>
+
+typedef BasicNetMessage<NetMessageType> _NetMsg;
+typedef shared_ptr<_NetMsg> _NetMsg_ptr;
+
+typedef INetMessageBodyDeserializer<NetMessageType> _IMsgDeserializer;
+typedef shared_ptr<_IMsgDeserializer> _IMsgDeserializer_ptr ;
 
 typedef QHash<QString, QVariant> InfoContainer;
 typedef std::shared_ptr<InfoContainer> InfoContainerPtr;
